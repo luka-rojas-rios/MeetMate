@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Form</title>
+  <style>
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .form-wrapper {
+      width: 100%;
+      max-width: 700px;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      color: #2c3e50;
+    }
+
+    /* Formulario */
+    form {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: 600;
+    }
+
+    select,
+    input[type="text"],
+    button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #0077cc;
+      outline: none;
+      box-shadow: 0 0 4px rgba(0, 119, 204, 0.5);
+    }
+
+    /* Botón de envío */
+    button[type="submit"] {
+      background-color: #0077cc;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 25px;
+      transition: background-color 0.3s;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #005fa3;
+    }
+
+    /* Sección condicional */
+    .hidden {
+      display: none;
+    }
+
+    /* Caja de mensaje */
+    .message-box {
+      margin-top: 30px;
+      background: #e9f5ff;
+      padding: 20px;
+      border-left: 5px solid #0077cc;
+      border-radius: 5px;
+    }
+
+    .message-box p {
+      margin-bottom: 10px;
+    }
+
+    .retry-form button {
+      background-color: #0077cc;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .retry-form button:hover {
+      background-color: #005fa3;
+    }
+  </style>
+</head>
+<body>
+
+
+  <div class="form-wrapper">
+    <h2>Student Form</h2>
+    <form id="studentForm" method="POST" action="/submit_match_profile">
+      <!-- Tipo de Estudiante -->
+      <label for="user_type">Student type:</label>
+      <select id="user_type" name="user_type" required>
+        <option value="">Select an option</option>
+        <option value="local">Local</option>
+        <option value="exchange">Exchange</option>
+      </select>
+
+      <!-- Selección de Universidad -->
+      <div id="universitySection" class="hidden">
+        <label for="country">Country:</label>
+        <select id="country" name="country" required>
+          <option value="">Select a country</option>
+        </select>
+
+        <label for="city">City:</label>
+        <select id="city" name="city" required>
+          <option value="">Select a city</option>
+        </select>
+
+        <label for="university">University:</label>
+        <select id="university" name="university" required>
+          <option value="">Select a university</option>
+        </select>
+      </div>
+
+      <!-- Ocultos: se rellenan desde JS -->
+      <input type="hidden" name="home_university" id="home_university" />
+      <input type="hidden" name="exchange_university" id="exchange_university" />
+
+      <!-- Idiomas -->
+      <label for="language">Language 1:</label>
+      <select id="language" name="language" required>
+        <option value="">Select a language</option>
+      </select>
+
+      <label for="language2">Language 2:</label>
+      <select id="language2" name="language2">
+        <option value="">None</option>
+      </select>
+
+      <!-- Hobbies -->
+      <label for="hobby_1">Hobby 1:</label>
+      <select id="hobby_1" name="hobby_1">
+        <option value="">Select one</option>
+      </select>
+
+      <label for="hobby_2">Hobby 2:</label>
+      <select id="hobby_2" name="hobby_2">
+        <option value="">Seleccione another one</option>
+      </select>
+
+      <!-- Deportes -->
+      <label for="favorite_sport_1">First favorite sport:</label>
+      <select id="favorite_sport_1" name="favorite_sport_1">
+        <option value="">Seleccione one</option>
+      </select>
+
+      <label for="favorite_sport_2">Second favorite sport:</label>
+      <select id="favorite_sport_2" name="favorite_sport_2">
+        <option value="">Select another one</option>
+      </select>
+
+      <br><br>
+      <button type="submit">Send</button>
+    </form>
+
+    <!-- Mensaje de resultado condicional -->
+    {% if message %}
+      <div class="message-box">
+        <p>{{ message }}</p>
+        <form method="GET" action="/match-profile" class="retry-form">
+          <button type="submit">Try again</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+  <script>
+    const universityData = {
+      "España": {
+        "Madrid": ["Universidad Complutense de Madrid", "Universidad Autónoma de Madrid", "Universidad Alfonso X el Sabio", "Universidad Camilo José Cela", "Universidad Carlos III de Madrid", "Universidad CEU San Pablo", "Universidad de Alcalá", "Universidad Europea de Madrid", "Universidad Francisco de Vitoria", "Universidad Nebrija", "Universidad Politécnica de Madrid"],
+        "Barcelona": ["Universitat de Barcelona", "Universitat Autònoma de Barcelona", "Universidad Ramón Llull", "Universitat Internacional de Catalunya", "Universitat Politècnica de Catalunya", "Universitat Pompeu Fabra"],
+        "Valencia": ["CEU Universidad Cardenal Herrera", "Universidad Católica de Valencia San Vicente Mártir", "Universidad Ramón Llull", "Universidad Europea de Valencia", "Universidad Internacional de Valencia", "Universitat de València", "Universitat Politècnica de València"],
+        "Segovia": ["IE Universidad"],
+        "Logroño": ["Universidad de La Rioja", "Universidad Internacional de La Rioja"],
+        "Sevilla": ["Universidad de Sevilla", "Universidad Internacional de Andalucía", "Universidad Pablo de Olavide"]
+      },
+      "Francia": {
+        "París": ["Arts et Métiers ParisTech", "Conservatoire national des arts et métiers", "CY Cergy Paris Université", "École d'économie de Paris", "Ecole d'ingénieurs en aéronautique et spatial", "Ecole de Management Léonard de Vinci", "École des Ponts ParisTech"],
+        "Lyon": ["ISARA-Lyon", "Université Catholique de Lyon", "Université Claude-Bernard Lyon 1", "Université Jean Moulin Lyon 3", "Université Lumière Lyon 2", "École centrale de Lyon", "École normale supérieure de Lyon"],
+        "Nice": ["IAE Nice", "Université Côte d'Azur", "Université de Toulon"],
+        "Rennes": ["ESC Rennes School of Business", "IGR IAE Rennes - École Universitaire de Management", "Université de Rennes 1", "Université Rennes 2", "École des hautes études en santé publique"],
+        "Vichy": ["Université Clermont Auvergne"]
+      },
+      "Alemania": {
+        "Berlín": ["Humboldt-Universität zu Berlin", "Freie Universität Berlin", "Akkon-Hochschule", "Alice Salomon Hochschule", "Bard College Berlin", "Barenboim-Said Akademie", "bbw Hochschule"],
+        "Múnich": ["Ludwig-Maximilians-Universität München", "Technische Universität München", "Akademie der Bildenden Künste München", "Hochschule der Bayerischen Wirtschaft für angewandte Wissenschaften", "Hochschule für angewandte Wissenschaften München", "Hochschule für den öffentlichen Dienst in Bayern"],
+        "Giessen": ["Freie Theologische Hochschulen", "Justus-Liebig-Universität Giessen", "Technische Hochschule Mittelhessen", "Hessische Hochschule für Polizei und Verwaltung"],
+        "Kiel": ["Christian-Albrechts-Universität zu Kiel", "Fachhochschule Kiel", "Muthesius Kunsthochschule", "Duale Hochschule Schleswig-Holstein"],
+        "Weimar": ["Bauhaus-Universität Weimar", "Hochschule für Musik Weimar"]
+      },
+      "Polonia": {
+        "Cracovia": ["Uniwersytet Ekonomiczny w Krakowie", "Uniwersytet Komisji Edukacji Narodowej w Krakowie", "Krakowska Wyższa Szkoła Promocji Zdrowia", "Uniwersytet Ignatianum w Krakowie", "Uniwersytet Rolniczy im. Hugona Kołłątaja w Krakowie", "Akademia Muzyczna im. Krzysztofa Pendereckiego w Krakowie", "Akademia Sztuk Teatralnych im. Stanisława Wyspiańskiego w Krakowie"],
+        "Bochnia": ["Staropolska Akademia Nauk Stosowanch w Kielcach - Filia w Bochni"],
+        "Konin": ["Akademia Nauk Stosowanych w Koninie", "Wyższa Szkoła Kadr Menedżerskich", "Wyższa Szkoła Pedagogiczno-Techniczna w Koninie", "Akademia Nauk Stosowanych TWP w Szczecinie - Filia w Koninie"],
+        "Kalisz": ["Akademia Kaliska im. Prezydenta Stanisława Wojciechowskiego", "TEB Edukacja Kalisz", "Uniwersytet im. Adama Mickiewicza w Poznaniu", "Wielkopolska Akademia Społeczno"],
+        "Kutno": ["Akademia Nauk Stosowanych Gospodarki Krajowej w Kutnie"],
+        "Opole": ["Politechnika Opolska", "Uniwersytet WSB Merito Opole", "Akademia Nauk Stosowanych", "Uniwersytet Opolski"]
+      },
+      "Grecia": {
+        "Atenas": ["Agricultural University of Athens", "Athens School of Fine Arts", "Athens University of Economics and Business", "Ecclesiastical Academy of Athens", "Harokopio University", "National and Kapodistrian University of Athens"],
+        "Corfu": ["Ionian University"],
+        "Crete": ["Hellenic Mediterranean University", "Higher School of Tourism Education of Crete", "Mediterranean Agronomic Institute of Chania", "Patriarchal University Ecclesiastical Academy of Crete", "Technical University of Crete", "University of Crete"],
+        "Volos": ["University of Thessaly"]
+      },
+      "Holanda": {
+        "Amsterdam": ["Amsterdam University of Applied Sciences", "Amsterdam University of the Arts", "Gerrit Rietveld Academy", "Global School for Entrepreneurship", "Hotelschool The Hague", "Tio University of Applied Sciences", "University of Amsterdam"],
+        "Delft": ["Delft University of Technology"],
+        "Gouda": ["Driestar Hogeschool"],
+        "Rotterdam": ["Codarts Rotterdam", "Erasmus Universiteit Rotterdam", "Hogeschool Rotterdam", "Islamic University of Rotterdam"],
+        "Tilburg": ["Tilburg University"],
+        "Utrecht": ["Hogeschool Utrecht", "Hogeschool voor de Kunsten Utrecht", "Manrix Academie", "Universiteit Utrecht", "Universiteit voor Humanistiek"],
+        "Velp": ["Hogeschool Van Hall Larenstein University of Applied Sciences"],
+        "Zwolle": ["Gereformeerde Hogeschool", "Katholieke Pabo Zwolle", "Windesheim University of Applied Sciences"]
+      },
+      "Italia": {
+        "Alessandria": ["Università degli Studi del Piemonte Orientale Amedeo Avogadro"],
+        "Bari": ["Politecnico di Bari", "Università degli Studi di Bari Aldo Moro"],
+        "Bologna": ["Università degli Studi di Bologna"],
+        "Cagliari": ["Università degli Studi di Cagliari"],
+        "Genova": ["Università degli Studi di Genova"],
+        "Milano": ["IULM Libera Università di Lingue e Comunicazione", "Politecnico di Milano", "Università Bocconi", "Università Cattolica del Sacro Cuore", "Università degli Studi di Milano", "Università degli Studi di Milano-Bicocca", "Università Vita-Salute San Raffaele", "Humanitas University"],
+        "Napoli": ["Università degli Studi della Campania Luigi Vanvitelli", "Università degli Studi di Napoli L'Orientale", "Università degli Studi di Napoli Parthenope", "Università degli Studi di Napoli Federico II", "Università degli Studi Suor Orsola Benincasa - Napoli", "Università Telematica Pegaso"],
+        "Palermo": ["Università degli Studi di Palermo", "Libera Università Maria Ss. Assunta"],
+        "Pisa": ["Università di Pisa"],
+        "Roma": ["Libera Università Maria Ss. Assunta", "Link Campus University", "LUISS Guido Carli", "Unicamillus - Saint Camillus International University Of Health Sciences", "Unitelma Sapienza", "Università Campus Bio-Medico di Roma", "Università Degli Studi di Roma Foro Italico", "Università degli Studi di Roma La Sapienza", "Università degli Studi di Roma Tor Vergata", "Università degli Studi Guglielmo Marconi", "Università degli Studi Internazionali di Roma - UNINT", "Universita degli Studi Niccolo Cusano", "Università degli Studi Roma Tre", "Università Europea di Roma", "Università Telematica Internazionale UNINETTUNO", "Università Telematica San Raffaele Roma", "Universitas Mercatorum - Università Telematica delle Camere di Commercio Italiane", "Università Cattolica del Sacro Cuore"],
+        "Venezia": ["Università Ca' Foscari", "Università Iuav di Venezia", "Università degli Studi di Padova"]
+      },
+      "Noruega": {
+        "Bergen": ["NLA University College", "Norwegian School of Economics", "University of Bergen", "Western Norway University of Applied Sciences"],
+        "Halden": ["Østfold University College"],
+        "Oslo": ["BI Norwegian Business School", "Fjellhaug International University College", "Inland Norway University of Applied Sciences", "MF Norwegian School of Theology, Religion and Society", "Norwegian Academy of Music", "Norwegian University of Life Sciences", "Oslo School of Architecture and Design", "Oslomet - Oslo Metropolitan University", "University of Oslo"],
+        "Stavanger": ["University of Stavanger", "VID Specialized University"],
+        "Volda": ["Volda University College"]
+      },
+      "Polonia": {
+        "Bochnia": ["Staropolska Akademia Nauk Stosowanch w Kielcach - Filia w Bochni"],
+        "Cracovia": ["Uniwersytet Komisji Edukacji Narodowej w Krakowie", "Uniwersytet Rolniczy im. Hugona Kołłątaja w Krakowie", "Uniwersytet SWPS – filia im. ks. Józefa Tischnera w Krakowie", "Krakowska Wyższa Szkoła Promocji Zdrowia", "Uniwersytet Ignatianum w Krakowie", "Pontificia Universidad Juan Pablo II", "AGH Universidad de Ciencias y Tecnología", "Universidad Jaguelónica de Cracovia", "Krakowskie Szkoły Artystyczne", "Akademia Muzyczna im. Krzysztofa Pendereckiego w Krakowie"],
+        "Konin": ["Akademia Nauk Stosowanych w Koninie", "Wyższa Szkoła Kadr Menedżerskich", "Wyższa Szkoła Pedagogiczno-Techniczna w Koninie", "Akademia Nauk Stosowanych TWP w Szczecinie - Filia w Koninie"],
+        "Opole": ["Politechnika Opolska", "Uniwersytet WSB Merito Opole", "Akademia Nauk Stosowanych - Wyższa Szkoła Zarządzania i Administracji w Opolu", "Uniwersytet Opolski"],
+        "Varsovia": ["Kozminski University", "Akademia Techniczno-Artystyczna Nauk Stosowanych w Warszawie", "Akademia Pedagogiki Specjalnej im. Marii Grzegorzewskiej w Warszawie", "Akademia WIT w Warszawie", "Uczelnia Techniczno-Handlowa im. Heleny Chodkowskiej", "Uczelnia Społeczno-Medyczna w Warszawie"],
+      },
+      "Portugal": {
+        "Braga": ["CESPU - Instituto Politécnico de Saúde do Norte", "Escola Superior Artística de Guimarães", "Instituto Superior de Saúde do Alto Ave", "Universidade Católica Portuguesa", "Universidade do Minho", "Universidade Lusíada - Norte de Vila Nova de Famalicão"],
+        "Múnich": ["Ludwig-Maximilians-Universität München", "Technische Universität München"],
+        "Faro": ["Universidade do Algarve"],
+        "Leiria": ["Instituto Politécnico de Leiria", "ISLA - Instituto Superior de Gestão e Administração Leiria"],
+        "Lisboa": ["Academia da Força Aérea", "Academia Militar", "Academia Nacional Superior de Orquestra", "Escola Superior de Actividades Imobiliárias", "Escola Superior de Artes Decorativas", "Escola Superior de Educação de Almeida Garrett", "Escola Superior de Educação de João de Deus", "Escola Superior de Educadores de Infância Maria Ulrich", "Escola Superior de Enfermagem de Lisboa", "Escola Superior de Enfermagem S. Francisco das Misericórdias", "Escola Superior de Saúde da Cruz Vermelha Portuguesa", "Escola Superior de Saúde do Alcoitão"],
+        "Porto": ["CESPU - Instituto Politécnico de Saúde do Norte", "CESPU - Instituto Universitário de Ciências da Saúde", "Conservatório Superior de Música de Gaia", "ESAD Matosinhos - Escola Superior de Artes e Design", "Escola Superior Artística do Porto", "Escola Superior de Educação de Paula Frassinetti", "Escola Superior de Enfermagem de Santa Maria", "Escola Superior de Enfermagem do Porto"],
+        "Tomar": ["Instituto Politécnico de Tomar"],
+        "Vila Real": ["Universidade de Trás-os-Montes e Alto Douro"]
+      },
+      "Suecia": {
+        "Estocolmo": ["Beckmans Designhögskola", "Dans- och cirkushögskolan", "Ericastiftelsen", "Ersta Sköndal högskola", "Försvarshögskolan", "Gymnastik- och idrottshögskolan", "Handelshögskolan i Stockholm", "Karolinska institutet", "Konstfack", "Kungl. Konsthögskolan", "Kungl. Musikhögskolan i Stockholm", "Kungl. Tekniska högskolan (KTH)", "Operahögskolan i Stockholm"],
+        "Falun": ["Högskolan Dalarna "],
+        "Trollhattan": ["Högskolan Väst"]
+      },
+      "Suiza": {
+        "Basilea": ["Fachhochschule Nordwestschweiz", "Universität Basel"],
+        "Fribourg": ["Pädagogische Hochschule Freiburgz", "Université de Fribourg"],
+        "Lugano": ["Università della Svizzera italiana"],
+        "San Galo": ["Fachhochschule Ostschweiz", "Pädagogische Hochschule St. Gallen", "Universität St. Gallen"],
+        "Zurich": ["Eidgenössische Technische Hochschule Zürich", "Interkantonale Hochschule für Heilpädagogik Zürich", "Kalaidos Fachhochschule", "Pädagogische Hochschule Zürich", "Universität Zürich", "Zürcher Fachhochschule"]
+      },
+      "Lituania": {
+        "Kaunas": ["Kaunas University of Technology", "Lithuanian Sports University"],
+        "Klaipėda": ["LCC International University"],
+        "Vilnius": ["European Humanities University", "ISM University of Management and Economics", "Kazimieras Simonavicius University", "Mykolas Romeris University", "Vilnius Gediminas Technical University"]
+      }
+    };
+
+    const languages = ["Spanish", "English", "French", "German", "Italian", "Portuguese"];
+    const hobbiesList = ["Reading", "Writing", "Painting", "Music", "Cinema", "Traveling", "Cooking", "Photography", "Gardening", "Dancing", "Video games", "Crafting", "Modeling", "Theater", "Volunteering"];
+    const sportsList = ["Football", "Basketball", "Tennis", "Swimming", "Cycling", "Running", "Hiking", "Volleyball", "Skiing", "Golf", "Martial arts", "Climbing", "Surfing", "Yoga", "Pilates"];
+
+    const countrySelect = document.getElementById('country');
+    const citySelect = document.getElementById('city');
+    const universityCombo = document.getElementById('university');
+
+    for (let country in universityData) {
+      let option = document.createElement('option');
+      option.value = country;
+      option.textContent = country;
+      countrySelect.appendChild(option);
+    }
+
+    countrySelect.addEventListener('change', function () {
+      citySelect.innerHTML = '<option value="">Select a city</option>';
+      universityCombo.innerHTML = '<option value="">Select a university</option>';
+      const cities = universityData[this.value];
+      for (let city in cities) {
+        let option = document.createElement('option');
+        option.value = city;
+        option.textContent = city;
+        citySelect.appendChild(option);
+      }
+    });
+
+    citySelect.addEventListener('change', function () {
+      universityCombo.innerHTML = '<option value="">Select a university</option>';
+      const universities = universityData[countrySelect.value][this.value];
+      universities.forEach(univ => {
+        let option = document.createElement('option');
+        option.value = univ;
+        option.textContent = univ;
+        universityCombo.appendChild(option);
+      });
+    });
+
+    document.getElementById('user_type').addEventListener('change', function () {
+      const section = document.getElementById('universitySection');
+      section.classList.toggle('hidden', this.value === '');
+    });
+
+    languages.forEach(lang => {
+      ['language', 'language2'].forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = lang;
+        opt.textContent = lang;
+        document.getElementById(id).appendChild(opt.cloneNode(true));
+      });
+    });
+
+    hobbiesList.forEach(hobby => {
+      ['hobby_1', 'hobby_2'].forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = hobby;
+        opt.textContent = hobby;
+        document.getElementById(id).appendChild(opt.cloneNode(true));
+      });
+    });
+
+    sportsList.forEach(sport => {
+      ['favorite_sport_1', 'favorite_sport_2'].forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = sport;
+        opt.textContent = sport;
+        document.getElementById(id).appendChild(opt.cloneNode(true));
+      });
+    });
+
+    document.getElementById("studentForm").addEventListener("submit", function (e) {
+      const studentType = document.getElementById("user_type").value;
+      const selectedUniversity = document.getElementById("university").value;
+
+      if (studentType === "exchange") {
+        document.getElementById("exchange_university").value = selectedUniversity;
+        document.getElementById("home_university").value = "";
+      } else {
+        document.getElementById("home_university").value = selectedUniversity;
+        document.getElementById("exchange_university").value = "";
+      }
+    });
+  </script>
+</body>
+</html>

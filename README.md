@@ -1,1 +1,2 @@
 # MeetMate
+git flow

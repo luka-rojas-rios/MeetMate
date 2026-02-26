@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MEET-MATE</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <!-- Imagen del logo -->
+  <img src="static/logo.jpeg" alt="Logo de Meet-Mate" class="logo">
+
+  <!-- Título principal -->
+  <h1>MEET-MATE</h1>
+
+  <!-- Pantalla de bienvenida -->
+  <div id="welcome-screen" class="login-container">
+    <button onclick="showLogin()">Log In</button>
+    <button onclick="showRegister()">Register</button>
+  </div>
+
+  <!-- Login -->
+  <div id="login-container" class="login-container" style="display: none;">
+    <form id="login-form">
+      <label for="username">Username</label><br>
+      <input type="text" id="username" name="username" required><br>
+
+      <label for="password">Password</label><br>
+      <input type="password" id="password" name="password" required><br>
+
+      <button type="submit">Sign In</button>
+    </form>
+    <div id="login-feedback" class="feedback-message"></div>
+    <p><a href="#" onclick="showRecoverPassword()">Forgot password?</a></p>
+<p><a href="#" onclick="showRegister()">Don't have an account? Register here</a></p>
+  </div>
+
+  <!-- Registro -->
+  <div id="register-container" class="login-container" style="display: none;">
+    <form id="register-form">
+      <label for="register-username">Username</label><br>
+      <input type="text" id="register-username" name="register-username" required><br>
+
+      <label for="register-password">Password</label><br>
+      <input type="password" id="register-password" name="register-password" required><br>
+
+      <ul id="password-rules" class="rules">
+        <li id="rule-length" class="invalid">At least 6 characteres.</li>
+        <li id="rule-uppercase" class="invalid">At least one capital letter.</li>
+        <li id="rule-lowercase" class="invalid">At least one lowercase letter.</li>
+        <li id="rule-number" class="invalid">At least one number.</li>
+        <li id="rule-special" class="invalid">At least one special character.</li>
+      </ul>
+
+      <label for="security-question">Recovery Question</label><br>
+      <select id="security-question" name="security-question" required>
+        <option value="">-- Choose a question --</option>
+        <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+        <option value="What is your favorite food?">What is your favorite food?</option>
+        <option value="In what city were you born?">In what city were you born?</option>
+        <option value="What is your favorite color?">What is your favorite color?</option>
+        <option value="What is the name of your best childhood friend?">What is the name of your best childhood friend?</option>
+      </select><br><br>
+
+      <label for="security-answer">Answer</label><br>
+      <input type="text" id="security-answer" name="security-answer" required><br><br>
+
+      <button type="submit">Register</button>
+<p><a href="#" onclick="showLogin()">Already have an account? Sign in here</a></p>
+    </form>
+    <div id="register-feedback" class="feedback-message"></div>
+  </div>
+
+  <!-- Recuperar contraseña -->
+  <div id="recover-container" class="login-container" style="display: none;">
+    <form id="recover-form">
+      <label for="recover-username">Username</label><br>
+      <input type="text" id="recover-username" name="recover-username" required><br><br>
+
+      <button type="submit">Search question</button>
+    </form>
+
+    <div id="security-question-section" style="display: none; margin-top: 20px;">
+      <p id="security-question-text"></p>
+
+      <label for="security-answer">Answer</label><br>
+      <input type="text" id="security-answer-input" name="security-answer" required><br><br>
+
+      <button id="validate-answer-button" type="button">Validate response</button>
+    </div>
+
+    <div id="reset-password-section" style="display: none; margin-top: 20px;">
+      <label for="new-password">New password</label><br>
+      <input type="password" id="new-password" name="new-password" required><br><br>
+
+      <button id="reset-password-button" type="button">Change password</button>
+    </div>
+
+    <div id="recover-feedback" class="feedback-message" style="margin-top: 20px;"></div>
+
+    <p><a href="#" onclick="showLogin()">Log back in</a></p>
+  </div>
+  <script src="static/app.js"></script>
+</body>
+</html>

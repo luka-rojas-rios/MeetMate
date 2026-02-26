@@ -1,112 +1,151 @@
-/* 1. Asegurar que el cuerpo use todo el alto y centre el contenido */
+/* --- Base y Fondo Moderno --- */
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Segoe UI', sans-serif;
-  background-color: #44667b;
+  font-family: 'Poppins', sans-serif;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Esto centra verticalmente */
+  justify-content: center;
   min-height: 100vh;
   color: white;
 }
+
+/* --- Logo Controlado --- */
 .logo {
-  max-width: 300px; 
-  width: 80%; 
+  max-width: 200px; 
+  max-height: 120px; 
+  width: auto;
   height: auto;
-  
-  margin: 20px auto 10px auto; 
-  
+  object-fit: contain; 
+  margin: 0 auto 15px auto; 
   border-radius: 15px;
   display: block;
-  
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2); 
 }
 
 h1 {
   font-size: 2.2em;
-  margin: 10px 0 20px 0;
+  margin: 0 0 20px 0;
   text-align: center;
+  font-weight: 600;
+  letter-spacing: 1px;
 }
 
+/* --- Contenedor Principal (Tarjeta) --- */
 .login-container {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.97);
   color: #333; 
   padding: 40px 30px; 
-  border-radius: 20px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-  width: 100%;
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+  width: 90%;
   max-width: 400px;
   text-align: center;
   box-sizing: border-box;
+  backdrop-filter: blur(10px);
 }
 
+/* --- Tipografía y Etiquetas --- */
 label {
   display: block;
+  text-align: left;
   margin-bottom: 8px;
   font-weight: 500;
-  font-size: 1.1em;
+  font-size: 0.95em;
+  color: #444;
 }
 
+/* --- Inputs y Selects --- */
 input[type="text"],
-input[type="password"] {
+input[type="password"],
+select {
   width: 100%;
-  padding: 12px;
-  margin-bottom: 25px; 
-  border: 1px solid #ccc;
-  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 20px; 
+  background-color: #f3f4f6;
+  border: 2px solid transparent;
+  border-radius: 12px;
   font-size: 1em;
+  font-family: 'Poppins', sans-serif;
   box-sizing: border-box;
-  transition: border-color 0.3s;
+  transition: all 0.3s ease;
 }
 
 input[type="text"]:focus,
-input[type="password"]:focus {
+input[type="password"]:focus,
+select:focus {
   outline: none;
-  border: 2px solid #44667b; 
+  background-color: #ffffff;
+  border: 2px solid #2a5298;
+  box-shadow: 0 0 8px rgba(42, 82, 152, 0.15);
 }
 
+/* --- Contenedor para el Ojo de la Contraseña --- */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 15px;
+  top: 14px;
+  cursor: pointer;
+  color: #666;
+  user-select: none;
+  font-size: 1.1em;
+}
+
+/* --- Botones --- */
 button {
-  background-color: #4b6a7e; 
+  background: linear-gradient(135deg, #4b6a7e, #36546a);
   color: white;
-  padding: 14px;
+  padding: 15px;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   width: 100%;
   font-size: 1.1em;
-  font-weight: bold;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 5px;
-  margin-bottom: 25px;
-  transition: background-color 0.3s;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  font-family: 'Poppins', sans-serif;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 button:hover {
-  background-color: #36546a;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* 6. Enlaces inferiores */
+/* --- Enlaces inferiores --- */
 .login-container p {
-  margin: 15px 0;
+  margin: 10px 0;
 }
 
 a {
-  color: #4b6a7e;
+  color: #2a5298;
   text-decoration: none;
-  font-size: 0.95em;
+  font-size: 0.9em;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
 a:hover {
+  color: #1e3c72;
   text-decoration: underline;
 }
 
+/* --- Mensajes de Feedback --- */
 .feedback-message {
   margin-top: 15px;
   font-size: 0.9em;
-  padding: 10px;
-  border-radius: 5px;
+  padding: 12px;
+  border-radius: 8px;
   display: none;
+  font-weight: 500;
 }
 
 .feedback-message.success {
@@ -121,22 +160,36 @@ a:hover {
   border: 1px solid #f5c6cb;
 }
 
+/* --- Reglas de Contraseña --- */
 .rules {
   list-style: none;
   padding-left: 0;
-  font-size: 0.85em;
+  font-size: 0.8em;
   text-align: left;
-  margin-top: 10px;
+  margin-top: -10px;
+  margin-bottom: 20px;
+  background-color: #f9f9f9;
+  padding: 10px;
+  border-radius: 8px;
 }
 
 .rules li {
-  margin-bottom: 5px;
+  margin-bottom: 4px;
+  transition: color 0.3s ease;
 }
 
 .rules li.valid {
-  color: green;
+  color: #28a745;
+}
+
+.rules li.valid::before {
+  content: "✔ ";
 }
 
 .rules li.invalid {
-  color: red;
+  color: #dc3545;
+}
+
+.rules li.invalid::before {
+  content: "✖ ";
 }

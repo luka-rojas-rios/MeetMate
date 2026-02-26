@@ -1,3 +1,4 @@
+/* 1. Asegurar que el cuerpo use todo el alto y centre el contenido */
 body {
   margin: 0;
   padding: 0;
@@ -6,58 +7,78 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center; /* Esto centra verticalmente */
   min-height: 100vh;
   color: white;
 }
-
 .logo {
-  width: 500px;
+  max-width: 300px; 
+  width: 80%; 
   height: auto;
-  margin: 40px auto 20px auto;
-  border-radius: 20px;
+  
+  margin: 20px auto 10px auto; 
+  
+  border-radius: 15px;
   display: block;
+  
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 h1 {
-  font-size: 2.8em;
-  font-weight: bold;
+  font-size: 2.2em;
+  margin: 10px 0 20px 0;
   text-align: center;
-  margin-bottom: 30px;
 }
 
 .login-container {
   background-color: white;
-  color: black;
-  padding: 30px;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  width: 90%;
-  max-width: 350px;
+  color: #333; 
+  padding: 40px 30px; 
+  border-radius: 20px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 400px;
   text-align: center;
-  margin-bottom: 40px;
+  box-sizing: border-box;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 1.1em;
 }
 
 input[type="text"],
 input[type="password"] {
   width: 100%;
   padding: 12px;
-  margin: 10px 0;
+  margin-bottom: 25px; 
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 1em;
+  box-sizing: border-box;
+  transition: border-color 0.3s;
+}
+
+input[type="text"]:focus,
+input[type="password"]:focus {
+  outline: none;
+  border: 2px solid #44667b; 
 }
 
 button {
-  background-color: #44667b;
+  background-color: #4b6a7e; 
   color: white;
-  padding: 12px;
+  padding: 14px;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   width: 100%;
-  font-size: 1em;
+  font-size: 1.1em;
+  font-weight: bold;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 5px;
+  margin-bottom: 25px;
   transition: background-color 0.3s;
 }
 
@@ -65,10 +86,15 @@ button:hover {
   background-color: #36546a;
 }
 
+/* 6. Enlaces inferiores */
+.login-container p {
+  margin: 15px 0;
+}
+
 a {
-  color: #44667b;
+  color: #4b6a7e;
   text-decoration: none;
-  font-size: 0.9em;
+  font-size: 0.95em;
 }
 
 a:hover {

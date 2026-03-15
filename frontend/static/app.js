@@ -127,7 +127,7 @@ function setupLoginForm() {
           loginFeedback.textContent = `✅ Welcome ${data.user}!`;
           localStorage.setItem("user", data.user);
           setTimeout(() => {
-            window.location.href = "/match-profile";
+            window.location.href = "/dashboard";
           }, 1500);
         } else {
           loginFeedback.style.display = "block";
@@ -254,7 +254,7 @@ function showRecoverPassword() {
 // Inicializar login
 setupLoginForm();
 
-// ✅ Función global para mostrar/ocultar contraseña
+// Función global para mostrar/ocultar contraseña
 function togglePasswordVisibility(id) {
   const input = document.getElementById(id);
   if (input) {

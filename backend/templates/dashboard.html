@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Dashboard</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #eef3f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .card {
+      background: #ffffff;
+      width: 100%;
+      max-width: 560px;
+      padding: 50px 45px;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      text-align: center;
+    }
+
+    h1 {
+      color: #1f5fae;
+      font-size: 32px;
+      margin-bottom: 12px;
+    }
+
+    p {
+      color: #555;
+      font-size: 16px;
+      margin-bottom: 28px;
+    }
+
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      margin-top: 18px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      box-sizing: border-box;
+    }
+
+    .btn-primary {
+      background: #0077cc;
+    }
+
+    .btn-secondary {
+      background: #57748a;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Welcome, {{ username }}</h1>
+    <p>Select what you want to do.</p>
+
+    <a class="btn btn-primary" href="/match-profile">Do Match</a>
+    <a class="btn btn-secondary" href="/edit-profile">Edit Personal Profile</a>
+  </div>
+</body>
+</html>

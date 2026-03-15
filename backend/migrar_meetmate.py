@@ -50,4 +50,4 @@ sqlite_conn.close()
 pg_cursor.close()
 pg_conn.close()
 
-print("✅ Migración completada con éxito.")
+print("Migración completada con éxito.")

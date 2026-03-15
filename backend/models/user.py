@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Date
 from backend.models.base import Base
 
 class User(Base):
@@ -10,6 +10,15 @@ class User(Base):
     security_question = Column(String, nullable=False)
     security_answer = Column(String, nullable=False)
 
+    # Personal profile
+    first_name = Column(String)
+    last_name = Column(String)
+    birth_date = Column(String)
+    sex = Column(String)
+    nationality = Column(String)
+    phone = Column(String)
+
+    # Match profile
     user_type = Column(String)
     language = Column(String)
     language_2 = Column(String)

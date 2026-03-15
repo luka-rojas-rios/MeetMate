@@ -63,6 +63,10 @@
 </head>
 <body>
 
+{% if message %}
+  <div class="match-card" style="margin-bottom: 18px; background:#e9f5ff;">{{ message }}</div>
+{% endif %}
+
 {% if matched_user %}
   <div class="match-card">
     <h1>🎉 ¡Congratulations!</h1>
@@ -80,6 +84,10 @@
         {{ matched_user.favorite_sport_1 }}, {{ matched_user.favorite_sport_2 }}
       </li>
     </ul>
+    <div class="button-container">
+      <a href="/dashboard">Back to dashboard</a>
+      <a href="/edit-profile">Edit personal profile</a>
+    </div>
   </div>
 
 {% else %}
@@ -87,7 +95,7 @@
     <h2>⚠️ No match information found</h2>
     <p>It looks like you haven't completed the form or there's no data available.</p>
     <div class="button-container">
-      <a href="/match-profile">Return to the form</a>
+      <a href="/edit-profile">Edit profile</a>
     </div>
   </div>
 {% endif %}

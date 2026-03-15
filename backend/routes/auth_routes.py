@@ -125,7 +125,7 @@ def reset_password(data: dict, db: Session = Depends(get_db)):
     user.password = new_password
     db.commit()
 
-    return {"message": "Password updated successfully 🎉"}
+    return {"message": "Password updated successfully"}
 
 
 @router.post("/match")

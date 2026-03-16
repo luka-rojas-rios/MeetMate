@@ -5,4 +5,4 @@ from backend.models.match import Match
 
 Base.metadata.create_all(bind=engine)
 
-print("✅ Tablas creadas correctamente")
+print(" Tablas creadas correctamente")

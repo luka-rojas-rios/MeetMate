@@ -1,9 +1,9 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from backend.database import SessionLocal
@@ -17,7 +17,6 @@ from backend.profile_options import (
     USER_TYPES,
     find_university_location,
 )
-from backend.schemas.match import MatchRequest
 
 router = APIRouter()
 templates = Jinja2Templates(directory="backend/templates")
@@ -51,7 +50,7 @@ def render_profile_form(request: Request, user: User | None = None, **extra_cont
         "sports": SPORTS,
         **extra_context,
     }
-    return templates.TemplateResponse("match_profile.html", context)
+    return templates.TemplateResponse(request=request, name="match_profile.html", context=context)
 
 
 def validate_profile_data(
@@ -68,73 +67,111 @@ def validate_profile_data(
 ):
     if user_type not in USER_TYPES:
         return "Invalid student type."
-
     if language not in LANGUAGES:
         return "Language 1 is invalid."
-
     if language2 and language2 not in LANGUAGES:
         return "Language 2 is invalid."
-
     if language2 and language2 == language:
         return "Please choose two different languages or leave Language 2 empty."
-
     if hobby_1 and hobby_1 not in HOBBIES:
         return "Hobby 1 is invalid."
-
     if hobby_2 and hobby_2 not in HOBBIES:
         return "Hobby 2 is invalid."
-
     if hobby_1 and hobby_2 and hobby_1 == hobby_2:
         return "Please choose two different hobbies or leave Hobby 2 empty."
-
     if favorite_sport_1 and favorite_sport_1 not in SPORTS:
         return "First favorite sport is invalid."
-
     if favorite_sport_2 and favorite_sport_2 not in SPORTS:
         return "Second favorite sport is invalid."
-
     if favorite_sport_1 and favorite_sport_2 and favorite_sport_1 == favorite_sport_2:
         return "Please choose two different sports or leave the second one empty."
-
     if country not in UNIVERSITY_DATA:
         return "Selected country is invalid."
-
     if city not in UNIVERSITY_DATA[country]:
         return "Selected city is invalid."
-
     if selected_university not in UNIVERSITY_DATA[country][city]:
         return "Selected university is invalid."
-
     return None
 
 
-@router.post("/match")
-def create_match(request: MatchRequest, db: Session = Depends(get_db)):
-    existing = db.query(Match).filter_by(
-        student_id=request.student_id,
-        buddy_id=request.buddy_id,
-    ).first()
+def get_profile_values(user: User):
+    languages = {value for value in [user.language, user.language_2] if value}
+    hobbies = {value for value in [user.hobby_1, user.hobby_2] if value}
+    sports = {value for value in [user.favorite_sport_1, user.favorite_sport_2] if value}
+    university = user.exchange_university or user.home_university
+    return languages, hobbies, sports, university
 
+
+def find_best_match(user: User, db: Session):
+    if user.user_type != "exchange":
+        return None, None
+
+    user_languages, user_hobbies, user_sports, user_university = get_profile_values(user)
+    if not user_languages or not user_university:
+        return None, "Complete your profile to request a match."
+
+    existing_pair_ids = set()
+    for current_match in db.query(Match).filter(
+        or_(Match.student_id == user.id, Match.buddy_id == user.id)
+    ).all():
+        existing_pair_ids.add(current_match.student_id)
+        existing_pair_ids.add(current_match.buddy_id)
+
+    candidates = db.query(User).filter(
+        User.id != user.id,
+        User.user_type == "local",
+        or_(
+            User.home_university == user_university,
+            User.exchange_university == user_university,
+        ),
+    ).all()
+
+    best_candidate = None
+    best_score = -1
+
+    for candidate in candidates:
+        if candidate.id in existing_pair_ids:
+            continue
+
+        candidate_languages, candidate_hobbies, candidate_sports, candidate_university = get_profile_values(candidate)
+        common_languages = user_languages & candidate_languages
+        if not common_languages:
+            continue
+
+        score = 0
+        score += 4 * len(common_languages)
+        if candidate_university == user_university:
+            score += 3
+        score += 2 * len(user_hobbies & candidate_hobbies)
+        score += 1 * len(user_sports & candidate_sports)
+
+        if score > best_score:
+            best_score = score
+            best_candidate = candidate
+
+    if not best_candidate:
+        return None, "There are currently no compatible local students available."
+
+    return best_candidate, None
+
+
+def create_match_record(user: User, matched_user: User, db: Session):
+    student_id = min(user.id, matched_user.id)
+    buddy_id = max(user.id, matched_user.id)
+    existing = db.query(Match).filter_by(student_id=student_id, buddy_id=buddy_id).first()
     if existing:
-        raise HTTPException(status_code=400, detail="There is already a match between these users.")
+        return existing
 
     match = Match(
-        student_id=request.student_id,
-        buddy_id=request.buddy_id,
+        student_id=student_id,
+        buddy_id=buddy_id,
         created_at=datetime.utcnow().isoformat(),
+        status="Created",
     )
     db.add(match)
     db.commit()
     db.refresh(match)
-    return {"message": "Match created successfully."}
-
-
-@router.get("/matches/{user_id}")
-def get_user_matches(user_id: int, db: Session = Depends(get_db)):
-    matches = db.query(Match).filter(
-        (Match.student_id == user_id) | (Match.buddy_id == user_id)
-    ).all()
-    return matches
+    return match
 
 
 @router.post("/submit_match_profile", response_class=HTMLResponse)
@@ -186,13 +223,18 @@ def submit_match_profile(
             hobby_2=hobby_2,
         )
         return templates.TemplateResponse(
-            "match_profile.html",
-            {
+            request=request,
+            name="match_profile.html",
+            context={
                 "request": request,
                 "user": temp_user,
                 "selected_country": country,
                 "selected_city": city,
                 "selected_university": university,
+                "university_data": UNIVERSITY_DATA,
+                "languages": LANGUAGES,
+                "hobbies": HOBBIES,
+                "sports": SPORTS,
                 "error": validation_error,
             },
         )
@@ -209,60 +251,31 @@ def submit_match_profile(
     db.commit()
     db.refresh(user)
 
-    opposite_type = "exchange" if user_type == "local" else "local"
-    university_to_match = user.exchange_university if user_type == "exchange" else user.home_university
-
-    possible_matches = db.query(User).filter(
-        User.id != user.id,
-        User.user_type == opposite_type,
-        or_(
-            User.language == language,
-            User.language == language2,
-            User.language_2 == language,
-            User.language_2 == language2,
-        ),
-        or_(
-            User.exchange_university == university_to_match,
-            User.home_university == university_to_match,
-        ),
-    ).all()
-
-    for match_candidate in possible_matches:
-        already_exists = db.query(Match).filter_by(
-            student_id=min(user.id, match_candidate.id),
-            buddy_id=max(user.id, match_candidate.id),
-        ).first()
-
-        if not already_exists:
-            match = Match(
-                student_id=min(user.id, match_candidate.id),
-                buddy_id=max(user.id, match_candidate.id),
-                created_at=datetime.utcnow().isoformat(),
-            )
-            db.add(match)
-            db.commit()
-            db.refresh(match)
-
-            request.session["match_id"] = match.id
-            request.session["match_owner"] = user.id
-
+    if user.user_type == "exchange":
+        matched_user, error_message = find_best_match(user, db)
+        if matched_user:
+            create_match_record(user, matched_user, db)
             return templates.TemplateResponse(
-                "match_success.html",
-                {
+                request=request,
+                name="match_success.html",
+                context={
                     "request": request,
-                    "matched_user": match_candidate,
-                    "message": "Profile updated successfully. Your new data was also used for matching.",
+                    "matched_user": matched_user,
+                    "message": "Profile updated successfully. A compatible local student has been assigned.",
                 },
             )
-
-    request.session["match_id"] = None
-    request.session["match_owner"] = user.id
+        return render_profile_form(
+            request,
+            user=user,
+            message=f"Profile updated successfully. {error_message}",
+        )
 
     return render_profile_form(
         request,
         user=user,
-        message="Profile updated successfully. Your latest information will be used for future matching.",
+        message="Profile updated successfully. Your profile is now available for exchange students.",
     )
+
 
 @router.get("/match-profile", response_class=HTMLResponse)
 def match_profile(request: Request, db: Session = Depends(get_db)):
@@ -280,6 +293,7 @@ def match_profile(request: Request, db: Session = Depends(get_db)):
         message="Complete or update your profile to improve your matching results.",
     )
 
+
 @router.get("/edit-profile", response_class=HTMLResponse)
 def edit_profile(request: Request, db: Session = Depends(get_db)):
     username = request.session.get("username")
@@ -290,11 +304,15 @@ def edit_profile(request: Request, db: Session = Depends(get_db)):
     if not user:
         return RedirectResponse(url="/", status_code=302)
 
-    return templates.TemplateResponse("edit_profile.html", {
-        "request": request,
-        "user": user,
-        "message": None
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_profile.html",
+        context={
+            "user": user,
+            "message": None
+        }
+    )
+
 
 @router.post("/edit-profile", response_class=HTMLResponse)
 def save_profile(
@@ -325,8 +343,11 @@ def save_profile(
     db.commit()
     db.refresh(user)
 
-    return templates.TemplateResponse("edit_profile.html", {
-        "request": request,
-        "user": user,
-        "message": "Personal profile updated successfully."
-    })
+    return templates.TemplateResponse(
+        request=request,
+        name="edit_profile.html",
+        context={
+            "user": user,
+            "message": "Personal profile updated successfully."
+        }
+    )

@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from backend.routes import auth_routes
 from backend.routes import match_routes
+from backend.routes import event_routes
 
 app = FastAPI()
 templates = Jinja2Templates(directory="backend/templates")
@@ -25,16 +26,29 @@ app.add_middleware(SessionMiddleware, secret_key="clave-super-secreta")
 
 app.include_router(auth_routes.router)
 app.include_router(match_routes.router)
+app.include_router(event_routes.router)
+
+from backend.models.base import Base
+from backend.database import engine
+from backend.models.user import User
+from backend.models.match import Match
+from backend.models.event import Event
+from backend.models.event_participant import EventParticipant
+
+Base.metadata.create_all(bind=engine)
+
 
 @app.get("/", response_class=HTMLResponse)
 def get_index():
     html = Path("frontend/index.html").read_text(encoding="utf-8")
     return html
 
+
 @app.get("/welcome", response_class=HTMLResponse)
 def get_welcome():
     html = Path("frontend/welcome.html").read_text(encoding="utf-8")
     return html
+
 
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
@@ -44,9 +58,9 @@ def dashboard(request: Request):
         return HTMLResponse(content=html)
 
     return templates.TemplateResponse(
-        "dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="dashboard.html",
+        context={
             "username": username
         }
     )

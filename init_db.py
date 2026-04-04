@@ -2,6 +2,7 @@ from backend.models.base import Base
 from backend.database import engine
 from backend.models.user import User
 from backend.models.match import Match
+from backend.models.event import Event
 
 Base.metadata.create_all(bind=engine)
 

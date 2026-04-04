@@ -1,5 +1,7 @@
-from sqlalchemy import Column, Integer, String, Date
+from sqlalchemy import Column, Integer, String
+from sqlalchemy.orm import relationship
 from backend.models.base import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -28,3 +30,6 @@ class User(Base):
     favorite_sport_2 = Column(String)
     hobby_1 = Column(String)
     hobby_2 = Column(String)
+
+    created_events = relationship("Event", back_populates="creator")
+    joined_event_links = relationship("EventParticipant", back_populates="user", cascade="all, delete-orphan")

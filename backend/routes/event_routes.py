@@ -9,7 +9,7 @@ from backend.models.event_participant import EventParticipant
 from backend.models.user import User
 
 router = APIRouter()
-templates = Jinja2Templates(directory="backend/templates")
+templates = Jinja2Templates(directory="frontend/templates")
 
 
 def get_db():

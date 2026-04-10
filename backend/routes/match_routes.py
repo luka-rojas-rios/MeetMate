@@ -19,7 +19,7 @@ from backend.profile_options import (
 )
 
 router = APIRouter()
-templates = Jinja2Templates(directory="backend/templates")
+templates = Jinja2Templates(directory="frontend/templates")
 
 
 def get_db():

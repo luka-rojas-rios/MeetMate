@@ -1,15 +1,15 @@
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from sqlalchemy.orm import Session
 from backend.models.auth import RegisterRequest, LoginRequest
 import re
-from backend.models.match import Match
 from datetime import datetime
+
+from backend.models.match import Match
 from backend.schemas.match import MatchRequest
 from backend.models.user import User
 from backend.models.match import Match
 from backend.database import SessionLocal
 from backend.models.user import User
-from fastapi import Request
 
 router = APIRouter()
 
@@ -69,7 +69,12 @@ def login(request: Request, credentials: LoginRequest, db: Session = Depends(get
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     request.session["username"] = user.username
-    return {"message": "Successful login 🎉", "user": user.username}
+    request.session["user_id"] = user.id
+    return {
+        "message": "Successful login 🎉",
+        "user": user.username,
+        "user_id": user.id
+    }
 
 
 # --- Obtener pregunta de recuperación ---

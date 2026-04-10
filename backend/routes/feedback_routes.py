@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from backend.database import get_db
 from backend.models.feedback import Feedback
+from backend.models.user import User
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
@@ -16,9 +17,9 @@ def feedback_page(request: Request, db: Session = Depends(get_db)):
     error = request.query_params.get("error")
 
     return templates.TemplateResponse(
-        "feedback.html",
-        {
-            "request": request,
+        request=request,
+        name="feedback.html",
+        context={
             "success": success,
             "error": error,
         },
@@ -35,17 +36,30 @@ def submit_feedback(
     db: Session = Depends(get_db),
 ):
     try:
-        # Si ya usas sesión en login, cambia esto para coger el usuario real.
-        user_id = request.session.get("user_id")
+        username = request.session.get("username")
 
-        if not user_id:
-            return RedirectResponse(url="/feedback?error=You must be logged in", status_code=303)
+        if not username:
+            return RedirectResponse(
+                url="/feedback?error=You must be logged in",
+                status_code=303
+            )
+
+        user = db.query(User).filter(User.username == username).first()
+
+        if not user:
+            return RedirectResponse(
+                url="/feedback?error=User not found",
+                status_code=303
+            )
 
         if not (1 <= university_rating <= 5 and 1 <= city_rating <= 5 and 1 <= overall_rating <= 5):
-            return RedirectResponse(url="/feedback?error=Ratings must be between 1 and 5", status_code=303)
+            return RedirectResponse(
+                url="/feedback?error=Ratings must be between 1 and 5",
+                status_code=303
+            )
 
         new_feedback = Feedback(
-            user_id=user_id,
+            user_id=user.id,
             university_rating=university_rating,
             city_rating=city_rating,
             overall_rating=overall_rating,
@@ -55,7 +69,14 @@ def submit_feedback(
         db.add(new_feedback)
         db.commit()
 
-        return RedirectResponse(url="/feedback?success=Feedback submitted successfully", status_code=303)
+        return RedirectResponse(
+            url="/feedback?success=Feedback submitted successfully",
+            status_code=303
+        )
 
     except Exception:
-        return RedirectResponse(url="/feedback?error=Could not save feedback", status_code=303)
+        db.rollback()
+        return RedirectResponse(
+            url="/feedback?error=Could not save feedback",
+            status_code=303
+        )

@@ -1,15 +1,13 @@
 from fastapi import APIRouter, HTTPException, Depends, Query, Request
 from sqlalchemy.orm import Session
 from backend.models.auth import RegisterRequest, LoginRequest
-import re
-from datetime import datetime
-
 from backend.models.match import Match
 from backend.schemas.match import MatchRequest
 from backend.models.user import User
-from backend.models.match import Match
 from backend.database import SessionLocal
-from backend.models.user import User
+from backend.auth import hash_password, verify_password
+import re
+from datetime import datetime
 
 router = APIRouter()
 
@@ -24,7 +22,7 @@ def get_db():
 # --- Registro de usuario ---
 @router.post("/register")
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
-    print("💡 Registro solicitado")
+    print("Registro solicitado")
 
     # Convertir username a minúsculas
     username = request.username.lower()
@@ -50,7 +48,7 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 
     new_user = User(
         username=username,
-        password=request.password,
+        password=hash_password(request.password),
         security_question=request.security_question,
         security_answer=request.security_answer
     )
@@ -58,20 +56,20 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return {"message": "Successfully registered user 🎉"}
+    return {"message": "Successfully registered user"}
 
 # --- Inicio de sesión ---
 @router.post("/login")
 def login(request: Request, credentials: LoginRequest, db: Session = Depends(get_db)):
     username = credentials.username.lower()
     user = db.query(User).filter(User.username.ilike(username)).first()
-    if not user or user.password != credentials.password:
+    if not user or not verify_password(credentials.password, user.password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     request.session["username"] = user.username
     request.session["user_id"] = user.id
     return {
-        "message": "Successful login 🎉",
+        "message": "Successful login",
         "user": user.username,
         "user_id": user.id
     }
@@ -127,7 +125,7 @@ def reset_password(data: dict, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail=" ".join(password_errors))
 
     # Actualizar contraseña
-    user.password = new_password
+    user.password = hash_password(new_password)
     db.commit()
 
     return {"message": "Password updated successfully"}

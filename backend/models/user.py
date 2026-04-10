@@ -31,7 +31,6 @@ class User(Base):
     hobby_1 = Column(String)
     hobby_2 = Column(String)
 
-
     created_events = relationship("Event", back_populates="creator")
     joined_event_links = relationship("EventParticipant", back_populates="user", cascade="all, delete-orphan")
-    feedbacks = relationship("Feedback", back_populates="user")
+    feedbacks = relationship("Feedback", back_populates="user", cascade="all, delete-orphan")

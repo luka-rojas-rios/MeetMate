@@ -47,6 +47,57 @@
       margin-top: 20px; background: #0077cc; color: white; font-weight: bold; cursor: pointer; border: none;
     }
     .submit-btn:hover { background: #005fa3; }
+    .match-box {
+      margin-bottom: 18px;
+      padding: 18px;
+      border-radius: 12px;
+      border: 1px solid #d8e6f7;
+      background: #f8fbff;
+    }
+    .match-box h2 {
+      color: #1f3c88;
+      margin-bottom: 10px;
+    }
+    .match-box ul {
+      margin-top: 12px;
+      padding-left: 20px;
+    }
+    .match-box li {
+      margin-bottom: 8px;
+    }
+    .match-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+    }
+    .match-actions form {
+      flex: 1;
+    }
+    .match-actions button {
+      width: 100%;
+    }
+    .secondary-btn {
+      background: #6c7a89;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .danger-btn {
+      background: #d93025;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .status-pill {
+      display: inline-block;
+      background: #eaf3ff;
+      color: #1f3c88;
+      font-weight: 700;
+      padding: 8px 12px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    } 
     @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
   </style>
 </head>
@@ -68,6 +119,42 @@
       {% if error %}
         <div class="error-box">{{ error }}</div>
       {% endif %}
+
+      {% if current_match and current_match_user %}
+      <div class="match-box">
+        <div class="status-pill">Current status: {{ current_match_status }}</div>
+        <h2>Your current match</h2>
+
+        <p><strong>User:</strong> {{ current_match_user.username }}</p>
+        <p><strong>University:</strong> {{ current_match_user.home_university or current_match_user.exchange_university }}</p>
+        <p><strong>Language:</strong> {{ current_match_user.language }}</p>
+        <p><strong>Compatibility score:</strong> {{ current_match_score }}</p>
+
+        <ul>
+          {% for reason in current_match_reasons %}
+            <li>{{ reason }}</li>
+         {% endfor %}
+        </ul>
+
+        <div class="match-actions">
+          {% if current_match_status == "pending" %}
+            <form method="POST" action="/matches/{{ current_match.id }}/accept">
+              <button type="submit" class="submit-btn">Accept match</button>
+            </form>
+            <form method="POST" action="/matches/{{ current_match.id }}/reject">
+                <button type="submit" class="danger-btn">Reject match</button>
+          </form>
+          {% elif current_match_status == "accepted" %}
+            <form method="POST" action="/matches/{{ current_match.id }}/complete">
+              <button type="submit" class="submit-btn">Complete match</button>
+            </form>
+            <form method="POST" action="/matches/{{ current_match.id }}/cancel">
+              <button type="submit" class="secondary-btn">Cancel match</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+    {% endif %}
 
       <form id="studentForm" method="POST" action="/submit_match_profile">
         <div class="grid">

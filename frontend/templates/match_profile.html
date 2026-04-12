@@ -2,238 +2,143 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Profile</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f6f8fb;
-      color: #333;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-    }
-    .form-wrapper { width: 100%; max-width: 760px; }
-    .card {
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-      padding: 28px;
-    }
-    h1 { color: #1f3c88; margin-bottom: 10px; }
-    .subtitle { color: #556; margin-bottom: 20px; }
-    .top-actions { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-    .top-actions a {
-      text-decoration: none; background: #eef4ff; color: #1f3c88; padding: 10px 14px; border-radius: 8px;
-      font-weight: 600;
-    }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .full { grid-column: 1 / -1; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    select, button {
-      width: 100%; padding: 11px 12px; border: 1px solid #ccd3df; border-radius: 8px; font-size: 1rem;
-      background: #fff;
-    }
-    select:focus { outline: none; border-color: #0077cc; box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.12); }
-    .hidden { display: none; }
-    .message-box, .error-box {
-      margin-bottom: 18px; padding: 14px 16px; border-radius: 10px;
-    }
-    .message-box { background: #e9f5ff; border-left: 5px solid #0077cc; }
-    .error-box { background: #ffeceb; border-left: 5px solid #d93025; }
-    .submit-btn {
-      margin-top: 20px; background: #0077cc; color: white; font-weight: bold; cursor: pointer; border: none;
-    }
-    .submit-btn:hover { background: #005fa3; }
-    .match-box {
-      margin-bottom: 18px;
-      padding: 18px;
-      border-radius: 12px;
-      border: 1px solid #d8e6f7;
-      background: #f8fbff;
-    }
-    .match-box h2 {
-      color: #1f3c88;
-      margin-bottom: 10px;
-    }
-    .match-box ul {
-      margin-top: 12px;
-      padding-left: 20px;
-    }
-    .match-box li {
-      margin-bottom: 8px;
-    }
-    .match-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
-    .match-actions form {
-      flex: 1;
-    }
-    .match-actions button {
-      width: 100%;
-    }
-    .secondary-btn {
-      background: #6c7a89;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .danger-btn {
-      background: #d93025;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .status-pill {
-      display: inline-block;
-      background: #eaf3ff;
-      color: #1f3c88;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 999px;
-      margin-bottom: 12px;
-    } 
-    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matching profile - MeetMate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="form-wrapper">
-    <div class="card">
-      <div class="top-actions">
-        <a href="/match-profile">Match view</a>
-        <a href="/edit-profile">Edit profile</a>
+  <div class="page narrow">
+    <div class="topbar">
+      <div class="brand">MeetMate</div>
+      <div class="actions">
+        <a class="btn" href="/edit-profile">Edit profile</a>
+        <a class="btn" href="/dashboard">Dashboard</a>
       </div>
+    </div>
 
-      <h1>Start your first match!</h1>
-      <p class="subtitle">Keep your information up to date to improve your matching results.</p>
+    {% if message %}<div class="flash success">{{ message }}</div>{% endif %}
+    {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
 
-      {% if message %}
-        <div class="message-box">{{ message }}</div>
-      {% endif %}
-
-      {% if error %}
-        <div class="error-box">{{ error }}</div>
-      {% endif %}
-
-      {% if current_match and current_match_user %}
-      <div class="match-box">
-        <div class="status-pill">Current status: {{ current_match_status }}</div>
-        <h2>Your current match</h2>
-
-        <p><strong>User:</strong> {{ current_match_user.username }}</p>
-        <p><strong>University:</strong> {{ current_match_user.home_university or current_match_user.exchange_university }}</p>
-        <p><strong>Language:</strong> {{ current_match_user.language }}</p>
-        <p><strong>Compatibility score:</strong> {{ current_match_score }}</p>
-
-        <ul>
-          {% for reason in current_match_reasons %}
-            <li>{{ reason }}</li>
-         {% endfor %}
+    {% if current_match and current_match_user %}
+      <section class="panel">
+        <div class="pill">Status: {{ current_match_status }}</div>
+        <h2 style="margin-top: 12px;">Your current match</h2>
+        <ul class="info">
+          <li><strong>User:</strong> {{ current_match_user.username }}</li>
+          <li><strong>University:</strong> {{ current_match_user.home_university or current_match_user.exchange_university }}</li>
+          <li><strong>Language:</strong> {{ current_match_user.language }}</li>
+          <li><strong>Compatibility:</strong> {{ current_match_score }}</li>
         </ul>
 
-        <div class="match-actions">
+        {% if current_match_reasons %}
+          <div class="subpanel">
+            <strong>Why this match</strong>
+            <ul class="reasons">
+              {% for reason in current_match_reasons %}
+                <li>{{ reason }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+
+        <div class="actions">
           {% if current_match_status == "pending" %}
             <form method="POST" action="/matches/{{ current_match.id }}/accept">
-              <button type="submit" class="submit-btn">Accept match</button>
+              <button class="btn primary" type="submit">Accept</button>
             </form>
             <form method="POST" action="/matches/{{ current_match.id }}/reject">
-                <button type="submit" class="danger-btn">Reject match</button>
-          </form>
+              <button class="btn danger" type="submit">Reject</button>
+            </form>
           {% elif current_match_status == "accepted" %}
             <form method="POST" action="/matches/{{ current_match.id }}/complete">
-              <button type="submit" class="submit-btn">Complete match</button>
+              <button class="btn primary" type="submit">Complete</button>
             </form>
             <form method="POST" action="/matches/{{ current_match.id }}/cancel">
-              <button type="submit" class="secondary-btn">Cancel match</button>
+              <button class="btn" type="submit">Cancel</button>
             </form>
-            {% endif %}
-          </div>
+          {% endif %}
         </div>
+      </section>
     {% endif %}
 
-      <form id="studentForm" method="POST" action="/submit_match_profile">
-        <div class="grid">
-          <div>
-            <label for="user_type">Student type</label>
-            <select id="user_type" name="user_type" required>
-              <option value="">Select an option</option>
-              <option value="local" {% if user and user.user_type == 'local' %}selected{% endif %}>Local</option>
-              <option value="exchange" {% if user and user.user_type == 'exchange' %}selected{% endif %}>Exchange</option>
-            </select>
-          </div>
+    <section class="panel">
+      <h1>Matching profile</h1>
+      <p class="subtitle">Keep this updated to improve your matching results.</p>
 
-          <div>
-            <label for="language">Language 1</label>
-            <select id="language" name="language" required>
-              <option value="">Select a language</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="language2">Language 2</label>
-            <select id="language2" name="language2">
-              <option value="">None</option>
-            </select>
-          </div>
-
-          <div id="universitySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
-            <label for="country">Country</label>
-            <select id="country" name="country" required>
-              <option value="">Select a country</option>
-            </select>
-          </div>
-
-          <div id="citySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
-            <label for="city">City</label>
-            <select id="city" name="city" required>
-              <option value="">Select a city</option>
-            </select>
-          </div>
-
-          <div class="full {% if not user or not user.user_type %}hidden{% endif %}" id="universityField">
-            <label for="university">University</label>
-            <select id="university" name="university" required>
-              <option value="">Select a university</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="hobby_1">Hobby 1</label>
-            <select id="hobby_1" name="hobby_1">
-              <option value="">Select one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="hobby_2">Hobby 2</label>
-            <select id="hobby_2" name="hobby_2">
-              <option value="">Select another one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="favorite_sport_1">Favorite sport 1</label>
-            <select id="favorite_sport_1" name="favorite_sport_1">
-              <option value="">Select one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="favorite_sport_2">Favorite sport 2</label>
-            <select id="favorite_sport_2" name="favorite_sport_2">
-              <option value="">Select another one</option>
-            </select>
-          </div>
+      <form id="studentForm" method="POST" action="/submit_match_profile" class="grid two">
+        <div class="full">
+          <label for="user_type">Student type</label>
+          <select id="user_type" name="user_type" required>
+            <option value="">Select an option</option>
+            <option value="local" {% if user and user.user_type == 'local' %}selected{% endif %}>Local</option>
+            <option value="exchange" {% if user and user.user_type == 'exchange' %}selected{% endif %}>Exchange</option>
+          </select>
         </div>
 
-        <button class="submit-btn" type="submit">Save match results</button>
+        <div>
+          <label for="language">Language 1</label>
+          <select id="language" name="language" required>
+            <option value="">Select a language</option>
+          </select>
+        </div>
+        <div>
+          <label for="language2">Language 2</label>
+          <select id="language2" name="language2">
+            <option value="">None</option>
+          </select>
+        </div>
+
+        <div id="universitySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
+          <label for="country">Country</label>
+          <select id="country" name="country" required>
+            <option value="">Select a country</option>
+          </select>
+        </div>
+        <div id="citySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
+          <label for="city">City</label>
+          <select id="city" name="city" required>
+            <option value="">Select a city</option>
+          </select>
+        </div>
+        <div class="full {% if not user or not user.user_type %}hidden{% endif %}" id="universityField">
+          <label for="university">University</label>
+          <select id="university" name="university" required>
+            <option value="">Select a university</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="hobby_1">Hobby 1</label>
+          <select id="hobby_1" name="hobby_1">
+            <option value="">Select one</option>
+          </select>
+        </div>
+        <div>
+          <label for="hobby_2">Hobby 2</label>
+          <select id="hobby_2" name="hobby_2">
+            <option value="">Select another</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="favorite_sport_1">Favorite sport 1</label>
+          <select id="favorite_sport_1" name="favorite_sport_1">
+            <option value="">Select one</option>
+          </select>
+        </div>
+        <div>
+          <label for="favorite_sport_2">Favorite sport 2</label>
+          <select id="favorite_sport_2" name="favorite_sport_2">
+            <option value="">Select another</option>
+          </select>
+        </div>
+
+        <div class="full actions">
+          <button class="btn primary" type="submit">Save matching profile</button>
+        </div>
       </form>
-    </div>
+    </section>
   </div>
 
   <script>
@@ -283,8 +188,7 @@
 
       if (!selectedCountry || !universityData[selectedCountry]) return;
 
-      const cities = Object.keys(universityData[selectedCountry]);
-      cities.forEach(city => {
+      Object.keys(universityData[selectedCountry]).forEach(city => {
         const option = document.createElement('option');
         option.value = city;
         option.textContent = city;
@@ -318,9 +222,9 @@
     populateSelect('language', languages, currentValues.language, false, 'Select a language');
     populateSelect('language2', languages, currentValues.language2, true, 'None');
     populateSelect('hobby_1', hobbiesList, currentValues.hobby1, true, 'Select one');
-    populateSelect('hobby_2', hobbiesList, currentValues.hobby2, true, 'Select another one');
+    populateSelect('hobby_2', hobbiesList, currentValues.hobby2, true, 'Select another');
     populateSelect('favorite_sport_1', sportsList, currentValues.sport1, true, 'Select one');
-    populateSelect('favorite_sport_2', sportsList, currentValues.sport2, true, 'Select another one');
+    populateSelect('favorite_sport_2', sportsList, currentValues.sport2, true, 'Select another');
     populateSelect('country', Object.keys(universityData), currentValues.country, false, 'Select a country');
     loadCities(currentValues.country, currentValues.city);
     loadUniversities(currentValues.country, currentValues.city, currentValues.university);

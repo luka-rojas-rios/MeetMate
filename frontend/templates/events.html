@@ -1,193 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Events</title>
-  <style>
-    :root {
-      --bg: #f3f6fb;
-      --card: rgba(255,255,255,0.94);
-      --text: #17324d;
-      --muted: #6b7d91;
-      --primary: #1d73e8;
-      --primary-dark: #1459b6;
-      --secondary: #edf3fb;
-      --success: #eaf8ee;
-      --success-border: #b8e0c2;
-      --error: #fff0f0;
-      --error-border: #f3c2c2;
-      --border: #d8e2f0;
-      --shadow: 0 18px 45px rgba(19, 42, 76, 0.12);
-      --danger: #d94b4b;
-      --danger-dark: #b83737;
-    }
-    * { box-sizing: border-box; }
-    html { scroll-behavior: smooth; }
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 42%, #eaf0f8 100%);
-      color: var(--text);
-    }
-    .page { max-width: 1200px; margin: 0 auto; padding: 26px 18px 48px; }
-    .topbar {
-      display: flex; justify-content: space-between; align-items: center; gap: 16px;
-      margin-bottom: 20px;
-    }
-    .brand { font-size: 28px; font-weight: 800; color: var(--text); }
-    .top-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    .ghost-btn, .primary-btn, .secondary-btn, .danger-btn, .mini-btn {
-      border: none; border-radius: 14px; padding: 12px 16px; text-decoration: none;
-      font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-      transition: .2s ease;
-    }
-    .primary-btn { background: var(--primary); color: white; box-shadow: 0 12px 24px rgba(29, 115, 232, .22); }
-    .primary-btn:hover { background: var(--primary-dark); }
-    .secondary-btn { background: var(--secondary); color: var(--text); border: 1px solid var(--border); }
-    .danger-btn { background: var(--danger); color: white; }
-    .danger-btn:hover { background: var(--danger-dark); }
-    .ghost-btn { background: white; color: var(--text); border: 1px solid var(--border); }
-    .mini-btn { background: white; color: var(--text); border: 1px solid var(--border); padding: 10px 12px; border-radius: 12px; }
-    .hero {
-      display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; margin-bottom: 24px;
-    }
-    .panel {
-      background: var(--card); border: 1px solid rgba(216, 226, 240, 0.85); border-radius: 28px;
-      box-shadow: var(--shadow); overflow: hidden;
-    }
-    .hero-main { padding: 34px; }
-    .eyebrow {
-      display: inline-flex; padding: 8px 12px; border-radius: 999px; background: #eaf3ff; color: var(--primary-dark);
-      font-weight: 700; font-size: 13px; margin-bottom: 18px;
-    }
-    h1, h2, h3, h4 { margin: 0; }
-    .hero-main h1 { font-size: 42px; line-height: 1.04; margin-bottom: 12px; }
-    .hero-main p { color: var(--muted); line-height: 1.6; font-size: 16px; margin-bottom: 22px; }
-    .highlights { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 12px; }
-    .highlight {
-      padding: 16px; border-radius: 18px; background: #f7faff; border: 1px solid var(--border);
-    }
-    .highlight strong { display: block; font-size: 22px; margin-bottom: 4px; }
-    .hero-side {
-      background: linear-gradient(180deg, #1f67cf, #144b97); color: white; padding: 28px;
-      display: flex; flex-direction: column; gap: 14px;
-    }
-    .announcement-card {
-      background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.15); border-radius: 18px; padding: 14px;
-    }
-    .announcement-card p { margin: 8px 0 0; line-height: 1.45; color: rgba(255,255,255,.92); }
-    .flash { margin-bottom: 18px; padding: 14px 16px; border-radius: 16px; font-weight: 600; }
-    .flash.success { background: var(--success); border: 1px solid var(--success-border); color: #23623b; }
-    .flash.error { background: var(--error); border: 1px solid var(--error-border); color: #963333; }
-    .layout { display: grid; grid-template-columns: 370px 1fr; gap: 22px; align-items: start; }
-    .form-card { padding: 24px; position: sticky; top: 20px; }
-    .form-card h2 { font-size: 28px; margin-bottom: 8px; }
-    .form-card p { color: var(--muted); margin-bottom: 18px; line-height: 1.5; }
-    .form-grid { display: grid; gap: 12px; }
-    label { font-weight: 700; font-size: 14px; color: var(--text); display: block; margin-bottom: 6px; }
-    input, textarea {
-      width: 100%; border-radius: 16px; border: 1px solid var(--border); background: #fbfdff;
-      padding: 13px 14px; font: inherit; color: var(--text);
-    }
-    textarea { min-height: 110px; resize: vertical; }
-    .form-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
-    .events-column { display: grid; gap: 16px; }
-    .event-card { padding: 22px; }
-    .event-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
-    .event-top h3 { font-size: 24px; }
-    .meta { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0 14px; color: var(--muted); font-size: 14px; }
-    .pill {
-      display: inline-flex; align-items: center; gap: 6px; background: #f2f7ff; color: var(--primary-dark);
-      border: 1px solid #dce9ff; padding: 8px 12px; border-radius: 999px; font-weight: 700; font-size: 13px;
-    }
-    .event-desc { color: #35506c; line-height: 1.6; margin-bottom: 16px; }
-    .participants { background: #f8fbff; border: 1px solid var(--border); border-radius: 18px; padding: 14px; }
-    .participants small { display: block; color: var(--muted); margin-bottom: 8px; }
-    .avatars { display: flex; flex-wrap: wrap; gap: 8px; }
-    .avatar { background: white; border: 1px solid var(--border); border-radius: 999px; padding: 8px 12px; font-size: 13px; }
-    .event-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
-    .edit-box {
-      margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--border);
-    }
-    .empty-state {
-      text-align: center; padding: 40px 24px; color: var(--muted); border: 1px dashed var(--border); border-radius: 24px;
-      background: rgba(255,255,255,.7);
-    }
-    .fab {
-      position: fixed; right: 22px; bottom: 22px; width: 58px; height: 58px; border-radius: 999px;
-      border: none; background: var(--primary); color: white; font-size: 30px; cursor: pointer;
-      box-shadow: 0 18px 30px rgba(29, 115, 232, .28);
-    }
-    @media (max-width: 980px) {
-      .hero, .layout { grid-template-columns: 1fr; }
-      .highlights { grid-template-columns: 1fr; }
-      .form-card { position: static; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Events - MeetMate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
   <div class="page">
     <div class="topbar">
-      <div class="brand">MeetMate events</div>
-      <div class="top-actions">
-        <a class="ghost-btn" href="/dashboard">Back to dashboard</a>
-        <a class="primary-btn" href="#add-event">Add event</a>
-      </div>
+      <div class="brand">MeetMate</div>
+      <a class="btn" href="/dashboard">Back to dashboard</a>
     </div>
-
-    <section class="hero">
-      <div class="panel hero-main">
-        <div class="eyebrow">Events · Community · Culture</div>
-        <h1>Discover plans, share announcements and join campus activities</h1>
-        <div class="highlights">
-          <div class="highlight">
-            <strong>{{ events|length }}</strong>
-            <span>Total published events</span>
-          </div>
-          <div class="highlight">
-            <strong>{{ featured_events|length }}</strong>
-            <span>Featured announcements</span>
-          </div>
-          <div class="highlight">
-            <strong>{{ events | selectattr('is_joined') | list | length }}</strong>
-            <span>Your joined events</span>
-          </div>
-        </div>
-      </div>
-      <aside class="panel hero-side">
-        <h2>Announcements</h2>
-        {% if featured_events %}
-          {% for event in featured_events %}
-            <div class="announcement-card">
-              <strong>{{ event.name }}</strong>
-              <p>{{ event.date }} · {{ event.location }}<br>{{ event.description }}</p>
-            </div>
-          {% endfor %}
-        {% else %}
-          <div class="announcement-card">
-            <strong>No announcements yet</strong>
-            <p>Create the first event and it will appear here as a featured announcement.</p>
-          </div>
-        {% endif %}
-      </aside>
-    </section>
 
     {% if message %}<div class="flash success">{{ message }}</div>{% endif %}
     {% if error %}<div class="flash error">{{ error }}</div>{% endif %}
 
     <section class="layout">
       <aside class="panel form-card" id="add-event">
-        <h2>Add a new event</h2>
-        <p>Use the quick form to publish an activity for exchange and local students.</p>
-        <form method="POST" action="/events" class="form-grid">
+        <h2>Add event</h2>
+        <p class="subtitle">Publish an activity for exchange and local students.</p>
+        <form method="POST" action="/events" class="grid">
           <div>
-            <label for="name">Event name</label>
+            <label for="name">Name</label>
             <input id="name" type="text" name="name" placeholder="International coffee meetup" required>
           </div>
           <div>
             <label for="description">Description</label>
-            <textarea id="description" name="description" placeholder="Tell students what the event is about" required></textarea>
+            <textarea id="description" name="description" required></textarea>
           </div>
           <div>
             <label for="date">Date</label>
@@ -197,30 +38,28 @@
             <label for="location">Location</label>
             <input id="location" type="text" name="location" placeholder="Madrid campus" required>
           </div>
-          <div class="form-actions">
-            <button class="primary-btn" type="submit">Publish event</button>
-            <a class="secondary-btn" href="#events-list">See events</a>
-          </div>
+          <button class="btn primary" type="submit">Publish event</button>
         </form>
       </aside>
 
-      <div class="events-column" id="events-list">
+      <div class="card-list" id="events-list">
         {% if events %}
           {% for event in events %}
-            <article class="panel event-card">
-              <div class="event-top">
+            <article class="card">
+              <div class="card-head">
                 <div>
-                  <div class="pill">Announcement</div>
                   <h3>{{ event.name }}</h3>
+                  <div class="meta">
+                    <span>{{ event.date }}</span>
+                    <span>{{ event.location }}</span>
+                    <span>By {{ event.creator_name }}</span>
+                  </div>
                 </div>
                 <div class="pill">{{ event.participants_count }} joined</div>
               </div>
-              <div class="meta">
-                <span>{{ event.date }}</span>
-                <span>{{ event.location }}</span>
-                <span>Created by {{ event.creator_name }}</span>
-              </div>
-              <div class="event-desc">{{ event.description }}</div>
+
+              <div class="card-body">{{ event.description }}</div>
+
               <div class="participants">
                 <small>Participants</small>
                 <div class="avatars">
@@ -234,31 +73,32 @@
                 </div>
               </div>
 
-              <div class="event-actions">
+              <div class="actions">
                 {% if event.is_joined %}
                   <form method="POST" action="/events/{{ event.id }}/leave">
-                    <button class="secondary-btn" type="submit">Leave event</button>
+                    <button class="btn" type="submit">Leave</button>
                   </form>
                 {% else %}
                   <form method="POST" action="/events/{{ event.id }}/join">
-                    <button class="primary-btn" type="submit">Join event</button>
+                    <button class="btn primary" type="submit">Join</button>
                   </form>
                 {% endif %}
 
                 {% if event.is_owner %}
-                  <button class="mini-btn" type="button" onclick="toggleEdit({{ event.id }})">Edit</button>
+                  <button class="btn" type="button" onclick="toggleEdit({{ event.id }})">Edit</button>
                   <form method="POST" action="/events/{{ event.id }}/delete" onsubmit="return confirm('Delete this event?');">
-                    <button class="danger-btn" type="submit">Delete</button>
+                    <button class="btn danger" type="submit">Delete</button>
                   </form>
                 {% endif %}
               </div>
 
               {% if event.is_owner %}
-                <div class="edit-box" id="edit-{{ event.id }}" {% if editing_event_id != event.id %}style="display:none"{% endif %}>
+                <div id="edit-{{ event.id }}" {% if editing_event_id != event.id %}style="display: none;"{% endif %}>
+                  <div class="divider"></div>
                   <h4>Edit event</h4>
-                  <form method="POST" action="/events/{{ event.id }}/edit" class="form-grid" style="margin-top:12px;">
+                  <form method="POST" action="/events/{{ event.id }}/edit" class="grid" style="margin-top: 12px;">
                     <div>
-                      <label>Event name</label>
+                      <label>Name</label>
                       <input type="text" name="name" value="{{ event.name }}" required>
                     </div>
                     <div>
@@ -273,9 +113,9 @@
                       <label>Location</label>
                       <input type="text" name="location" value="{{ event.location }}" required>
                     </div>
-                    <div class="form-actions">
-                      <button class="primary-btn" type="submit">Save changes</button>
-                      <button class="secondary-btn" type="button" onclick="toggleEdit({{ event.id }})">Cancel</button>
+                    <div class="actions">
+                      <button class="btn primary" type="submit">Save</button>
+                      <button class="btn" type="button" onclick="toggleEdit({{ event.id }})">Cancel</button>
                     </div>
                   </form>
                 </div>
@@ -284,22 +124,19 @@
           {% endfor %}
         {% else %}
           <div class="empty-state">
-            <h3>No events published yet</h3>
-            <p>Use the Add event button to publish the first announcement for the student community.</p>
+            <h3>No events yet</h3>
+            <p>Use the form on the left to publish the first one.</p>
           </div>
         {% endif %}
       </div>
     </section>
   </div>
 
-  <button class="fab" type="button" onclick="window.location.hash='add-event'">+</button>
-
   <script>
-    function toggleEdit(eventId) {
-      const editBox = document.getElementById(`edit-${eventId}`);
-      if (!editBox) return;
-      const isHidden = editBox.style.display === 'none' || editBox.style.display === '';
-      editBox.style.display = isHidden ? 'block' : 'none';
+    function toggleEdit(id) {
+      const box = document.getElementById('edit-' + id);
+      if (!box) return;
+      box.style.display = (box.style.display === 'none' || box.style.display === '') ? 'block' : 'none';
     }
   </script>
 </body>

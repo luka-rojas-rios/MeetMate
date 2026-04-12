@@ -1,147 +1,62 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Edit Personal Profile</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef3f9;
-      padding: 40px;
-      margin: 0;
-    }
-
-    .card {
-      background: white;
-      max-width: 720px;
-      margin: auto;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      color: #1f5fae;
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #555;
-      margin-bottom: 24px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-      color: #23395b;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #cfd8e3;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-
-    .actions {
-      margin-top: 24px;
-      display: flex;
-      gap: 12px;
-    }
-
-    button, a {
-      padding: 12px 18px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-
-    button {
-      background: #0077cc;
-      color: white;
-    }
-
-    a {
-      background: #e9eef5;
-      color: #23395b;
-    }
-
-    .message {
-      margin-top: 20px;
-      padding: 12px;
-      background: #eaf8ea;
-      border: 1px solid #b7e0b7;
-      border-radius: 10px;
-      color: #2b6b2b;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit profile - MeetMate</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-  <div class="card">
-    <h1>Edit Personal Profile</h1>
-    <p>Update your personal information.</p>
+  <div class="page narrow">
+    <div class="topbar">
+      <div class="brand">MeetMate</div>
+      <a class="btn" href="/dashboard">Back to dashboard</a>
+    </div>
 
-    <form method="POST" action="/edit-profile">
-      <div class="grid">
+    {% if message %}<div class="flash success">{{ message }}</div>{% endif %}
+
+    <section class="panel">
+      <h1>Edit personal profile</h1>
+      <p class="subtitle">Update your personal information.</p>
+
+      <form method="POST" action="/edit-profile" class="grid two">
         <div>
-          <label>First name</label>
-          <input type="text" name="first_name" value="{{ user.first_name or '' }}">
+          <label for="first_name">First name</label>
+          <input id="first_name" type="text" name="first_name" value="{{ user.first_name or '' }}">
         </div>
-
         <div>
-          <label>Last name</label>
-          <input type="text" name="last_name" value="{{ user.last_name or '' }}">
+          <label for="last_name">Last name</label>
+          <input id="last_name" type="text" name="last_name" value="{{ user.last_name or '' }}">
         </div>
-
         <div>
-          <label>Birth date</label>
-          <input type="date" name="birth_date" value="{{ user.birth_date or '' }}">
+          <label for="birth_date">Birth date</label>
+          <input id="birth_date" type="date" name="birth_date" value="{{ user.birth_date or '' }}">
         </div>
-
         <div>
-          <label>Sex</label>
-          <select name="sex">
+          <label for="sex">Sex</label>
+          <select id="sex" name="sex">
             <option value="">Select</option>
             <option value="Female" {% if user.sex == "Female" %}selected{% endif %}>Female</option>
             <option value="Male" {% if user.sex == "Male" %}selected{% endif %}>Male</option>
             <option value="Other" {% if user.sex == "Other" %}selected{% endif %}>Other</option>
           </select>
         </div>
-
         <div>
-          <label>Nationality</label>
-          <input type="text" name="nationality" value="{{ user.nationality or '' }}">
+          <label for="nationality">Nationality</label>
+          <input id="nationality" type="text" name="nationality" value="{{ user.nationality or '' }}">
+        </div>
+        <div>
+          <label for="phone">Phone</label>
+          <input id="phone" type="text" name="phone" value="{{ user.phone or '' }}">
         </div>
 
-        <div>
-          <label>Phone</label>
-          <input type="text" name="phone" value="{{ user.phone or '' }}">
+        <div class="full actions">
+          <button class="btn primary" type="submit">Save profile</button>
+          <a class="btn" href="/dashboard">Cancel</a>
         </div>
-      </div>
-
-      <div class="actions">
-        <button type="submit">Save personal profile</button>
-        <a href="/dashboard">Back to dashboard</a>
-      </div>
-    </form>
-
-    {% if message %}
-      <div class="message">{{ message }}</div>
-    {% endif %}
+      </form>
+    </section>
   </div>
 </body>
 </html>

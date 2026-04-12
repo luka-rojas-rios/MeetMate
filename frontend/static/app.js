@@ -16,7 +16,6 @@ function showRegister() {
   }
 }
 
-// --- Registro ---
 const registerForm = document.getElementById("register-form");
 const feedback = document.getElementById("register-feedback");
 const passwordInput = document.getElementById("register-password");
@@ -30,128 +29,102 @@ passwordInput.addEventListener("input", () => {
   document.getElementById("rule-special").className = /[\W_]/.test(password) ? "valid" : "invalid";
 });
 
-if (!registerForm.hasListener) {
-  registerForm.addEventListener("submit", async function (event) {
+function showFeedback(el, type, text) {
+  el.className = "flash " + type;
+  el.style.display = "block";
+  el.textContent = text;
+}
+
+function clearFeedback(el) {
+  el.style.display = "none";
+  el.textContent = "";
+  el.className = "flash";
+}
+
+registerForm.addEventListener("submit", async function (event) {
+  event.preventDefault();
+  const username = document.getElementById("register-username").value.trim();
+  const password = passwordInput.value.trim();
+  const securityQuestion = document.getElementById("security-question").value;
+  const securityAnswer = document.getElementById("security-answer").value.trim();
+
+  clearFeedback(feedback);
+
+  if (!securityQuestion) {
+    showFeedback(feedback, "error", "You must select a recovery question.");
+    return;
+  }
+
+  if (!securityAnswer) {
+    showFeedback(feedback, "error", "Please write a recovery answer.");
+    return;
+  }
+
+  try {
+    const response = await fetch("/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        username,
+        password,
+        security_question: securityQuestion,
+        security_answer: securityAnswer,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      showFeedback(feedback, "success", "Registration successful. You can now log in.");
+      setTimeout(showLogin, 1500);
+    } else {
+      const detail = data.detail;
+      const text = Array.isArray(detail) ? detail.map((d) => d.msg || d).join(", ") : detail;
+      showFeedback(feedback, "error", text);
+    }
+  } catch (error) {
+    showFeedback(feedback, "error", "Server connection error.");
+    console.error(error);
+  }
+});
+
+function setupLoginForm() {
+  const loginForm = document.getElementById("login-form");
+  const loginFeedback = document.getElementById("login-feedback");
+
+  loginForm.addEventListener("submit", async function (event) {
     event.preventDefault();
-    const username = document.getElementById("register-username").value.trim();
-    const password = passwordInput.value.trim();
-    const securityQuestion = document.getElementById("security-question").value;
-    const securityAnswer = document.getElementById("security-answer").value.trim();
+    const username = document.getElementById("username").value.trim();
+    const password = document.getElementById("password").value.trim();
 
-    feedback.style.display = "none";
-    feedback.textContent = "";
-    feedback.classList.remove("success", "error");
-
-    if (!securityQuestion) {
-      feedback.style.display = "block";
-      feedback.classList.add("error");
-      feedback.textContent = "❌ You must select a recovery question.";
-      return;
-    }
-
-    if (!securityAnswer) {
-      feedback.style.display = "block";
-      feedback.classList.add("error");
-      feedback.textContent = "❌ You must write a recovery response.";
-      return;
-    }
+    clearFeedback(loginFeedback);
 
     try {
-      const response = await fetch("/register", {
+      const response = await fetch("/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username,
-          password,
-          security_question: securityQuestion,
-          security_answer: securityAnswer,
-        }),
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        feedback.style.display = "block";
-        feedback.classList.add("success");
-        feedback.textContent = "✅ Registration successful. You can now log in..";
-        setTimeout(() => {
-          showLogin();
-        }, 1500);
+        showFeedback(loginFeedback, "success", `Welcome, ${data.user}`);
+        localStorage.setItem("user", data.user);
+        setTimeout(() => { window.location.href = "/dashboard"; }, 1200);
       } else {
-        const detail = data.detail;
-        feedback.style.display = "block";
-        feedback.classList.add("error");
-        if (Array.isArray(detail)) {
-          feedback.textContent = "❌ " + detail.map((d) => d.msg || d).join(", ");
-        } else {
-          feedback.textContent = `❌ ${detail}`;
-        }
+        const text = Array.isArray(data.detail)
+          ? data.detail.map((e) => e.msg).join(", ")
+          : (typeof data.detail === "string" ? data.detail : "Unknown error.");
+        showFeedback(loginFeedback, "error", text);
       }
     } catch (error) {
-      feedback.style.display = "block";
-      feedback.classList.add("error");
-      feedback.textContent = "❌ Server connection error.";
+      showFeedback(loginFeedback, "error", "Server connection error.");
       console.error(error);
     }
   });
-  registerForm.hasListener = true;
 }
 
-// --- Login ---
-function setupLoginForm() {
-  const loginForm = document.getElementById("login-form");
-  const loginFeedback = document.getElementById("login-feedback");
-
-  if (!loginForm.hasListener) {
-    loginForm.addEventListener("submit", async function (event) {
-      event.preventDefault();
-      const username = document.getElementById("username").value.trim();
-      const password = document.getElementById("password").value.trim();
-
-      loginFeedback.style.display = "none";
-      loginFeedback.textContent = "";
-      loginFeedback.classList.remove("success", "error");
-
-      try {
-        const response = await fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-          loginFeedback.style.display = "block";
-          loginFeedback.classList.add("success");
-          loginFeedback.textContent = `✅ Welcome ${data.user}!`;
-          localStorage.setItem("user", data.user);
-          setTimeout(() => {
-            window.location.href = "/dashboard";
-          }, 1500);
-        } else {
-          loginFeedback.style.display = "block";
-          loginFeedback.classList.add("error");
-          if (Array.isArray(data.detail)) {
-            loginFeedback.textContent = "❌ Error: " + data.detail.map((e) => e.msg).join(", ");
-          } else if (typeof data.detail === "string") {
-            loginFeedback.textContent = `❌ Error: ${data.detail}`;
-          } else {
-            loginFeedback.textContent = "❌ Unknown error.";
-          }
-        }
-      } catch (error) {
-        loginFeedback.style.display = "block";
-        loginFeedback.classList.add("error");
-        loginFeedback.textContent = "❌ Server connection error.";
-        console.error(error);
-      }
-    });
-    loginForm.hasListener = true;
-  }
-}
-
-// --- Recuperar Contraseña ---
 function showRecoverPassword() {
   document.getElementById("welcome-screen").style.display = "none";
   document.getElementById("login-container").style.display = "none";
@@ -167,25 +140,21 @@ function showRecoverPassword() {
   recoverForm.addEventListener("submit", async function (event) {
     event.preventDefault();
     const username = document.getElementById("recover-username").value.trim();
-    recoverFeedback.style.display = "none";
+    clearFeedback(recoverFeedback);
 
     try {
       const response = await fetch(`/recover-password?username=${username}`);
       const data = await response.json();
 
       if (response.ok) {
-        securitySection.style.display = "block";
+        securitySection.style.display = "grid";
         securityQuestionText.textContent = data.security_question;
         securitySection.dataset.username = username;
       } else {
-        recoverFeedback.style.display = "block";
-        recoverFeedback.className = "feedback-message error";
-        recoverFeedback.textContent = `❌ Error: ${data.detail}`;
+        showFeedback(recoverFeedback, "error", data.detail);
       }
     } catch (error) {
-      recoverFeedback.style.display = "block";
-      recoverFeedback.className = "feedback-message error";
-      recoverFeedback.textContent = "❌ Error searching for the question.";
+      showFeedback(recoverFeedback, "error", "Error searching for the question.");
     }
   });
 
@@ -202,17 +171,13 @@ function showRecoverPassword() {
       const data = await response.json();
 
       if (response.ok) {
-        resetSection.style.display = "block";
+        resetSection.style.display = "grid";
         resetSection.dataset.username = username;
       } else {
-        recoverFeedback.style.display = "block";
-        recoverFeedback.className = "feedback-message error";
-        recoverFeedback.textContent = `❌ Error: ${data.detail}`;
+        showFeedback(recoverFeedback, "error", data.detail);
       }
     } catch (error) {
-      recoverFeedback.style.display = "block";
-      recoverFeedback.className = "feedback-message error";
-      recoverFeedback.textContent = "❌ Error validating response.";
+      showFeedback(recoverFeedback, "error", "Error validating answer.");
     }
   });
 
@@ -228,36 +193,27 @@ function showRecoverPassword() {
       });
       const data = await response.json();
 
-      recoverFeedback.style.display = "block";
       if (response.ok) {
-        recoverFeedback.className = "feedback-message success";
-        recoverFeedback.textContent = "✅ Password updated successfully.";
-        setTimeout(() => showLogin(), 2000);
+        showFeedback(recoverFeedback, "success", "Password updated successfully.");
+        setTimeout(showLogin, 1500);
       } else {
-        recoverFeedback.className = "feedback-message error";
-        if (Array.isArray(data.detail)) {
-          recoverFeedback.textContent = "❌ Error: " + data.detail.map((e) => e.msg).join(", ");
-        } else if (typeof data.detail === "string") {
-          recoverFeedback.textContent = `❌ Error: ${data.detail}`;
-        } else {
-          recoverFeedback.textContent = "❌ Unknown error.";
-        }
+        const text = Array.isArray(data.detail)
+          ? data.detail.map((e) => e.msg).join(", ")
+          : (typeof data.detail === "string" ? data.detail : "Unknown error.");
+        showFeedback(recoverFeedback, "error", text);
       }
     } catch (error) {
-      recoverFeedback.style.display = "block";
-      recoverFeedback.className = "feedback-message error";
-      recoverFeedback.textContent = "❌ Error changing password.";
+      showFeedback(recoverFeedback, "error", "Error changing password.");
     }
   });
 }
 
-// Inicializar login
 setupLoginForm();
 
-// Función global para mostrar/ocultar contraseña
-function togglePasswordVisibility(id) {
+function togglePasswordVisibility(id, button) {
   const input = document.getElementById(id);
-  if (input) {
-    input.type = input.type === "password" ? "text" : "password";
-  }
+  if (!input) return;
+  const showing = input.type === "password";
+  input.type = showing ? "text" : "password";
+  if (button) button.textContent = showing ? "Hide" : "Show";
 }

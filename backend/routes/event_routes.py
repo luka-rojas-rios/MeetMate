@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
+from datetime import date
 
 from backend.database import SessionLocal
 from backend.models.event import Event
@@ -21,19 +22,22 @@ def get_db():
 
 
 def get_logged_user(request: Request, db: Session):
-    username = request.session.get("username")
-    if not username:
+    user_id = request.session.get("user_id")
+    if not user_id:
         return None
-    return db.query(User).filter_by(username=username).first()
+    return db.query(User).filter_by(id=user_id).first()
 
 
 def build_events_context(request: Request, db: Session, user: User, message=None, error=None, editing_event_id=None):
+    today = date.today().isoformat()
+
     events = (
         db.query(Event)
         .options(
             joinedload(Event.creator),
             joinedload(Event.participants).joinedload(EventParticipant.user),
         )
+        .filter(Event.date >= today)
         .order_by(Event.date.asc(), Event.id.desc())
         .all()
     )
@@ -42,6 +46,7 @@ def build_events_context(request: Request, db: Session, user: User, message=None
     for event in events:
         participant_ids = [participant.user_id for participant in event.participants]
         participant_names = [participant.user.username for participant in event.participants if participant.user]
+
         event_cards.append(
             {
                 "id": event.id,
@@ -58,6 +63,7 @@ def build_events_context(request: Request, db: Session, user: User, message=None
         )
 
     featured_events = event_cards[:3]
+
     return {
         "request": request,
         "user": user,
@@ -83,24 +89,21 @@ def events_page(request: Request, db: Session = Depends(get_db)):
 
 
 @router.post("/events", response_class=HTMLResponse)
-def create_event(
+async def create_event(
     request: Request,
-    name: str = Form(""),
-    description: str = Form(""),
-    date: str = Form(""),
-    location: str = Form(""),
     db: Session = Depends(get_db),
 ):
     user = get_logged_user(request, db)
     if not user:
         return RedirectResponse(url="/", status_code=302)
 
-    name = name.strip()
-    description = description.strip()
-    date = date.strip()
-    location = location.strip()
+    form = await request.form()
+    name = str(form.get("name", "")).strip()
+    description = str(form.get("description", "")).strip()
+    event_date = str(form.get("date", "")).strip()
+    location = str(form.get("location", "")).strip()
 
-    if not all([name, description, date, location]):
+    if not all([name, description, event_date, location]):
         return templates.TemplateResponse(
             request=request,
             name="events.html",
@@ -112,10 +115,23 @@ def create_event(
             ),
         )
 
+    today = date.today().isoformat()
+    if event_date < today:
+        return templates.TemplateResponse(
+            request=request,
+            name="events.html",
+            context=build_events_context(
+                request,
+                db,
+                user,
+                error="You cannot create an event in the past.",
+            ),
+        )
+
     event = Event(
         name=name,
         description=description,
-        date=date,
+        date=event_date,
         location=location,
         created_by=user.id,
     )
@@ -148,12 +164,25 @@ def join_event(event_id: int, request: Request, db: Session = Depends(get_db)):
             context=build_events_context(request, db, user, error="Event not found."),
         )
 
+    today = date.today().isoformat()
+    if event.date < today:
+        return templates.TemplateResponse(
+            request=request,
+            name="events.html",
+            context=build_events_context(request, db, user, error="You cannot join a past event."),
+        )
+
     existing_participation = db.query(EventParticipant).filter_by(event_id=event_id, user_id=user.id).first()
     if existing_participation:
         return templates.TemplateResponse(
             request=request,
             name="events.html",
-            context=build_events_context(request, db, user, message="You are already registered for this event."),
+            context=build_events_context(
+                request,
+                db,
+                user,
+                message="You are already registered for this event.",
+            ),
         )
 
     db.add(EventParticipant(event_id=event_id, user_id=user.id))
@@ -193,7 +222,7 @@ def edit_event(
     request: Request,
     name: str = Form(""),
     description: str = Form(""),
-    date: str = Form(""),
+    event_date: str = Form("", alias="date"),
     location: str = Form(""),
     db: Session = Depends(get_db),
 ):
@@ -216,11 +245,20 @@ def edit_event(
             context=build_events_context(request, db, user, error="Only the creator can edit this event."),
         )
 
+    today = date.today().isoformat()
+    if event.date < today:
+        return templates.TemplateResponse(
+            request=request,
+            name="events.html",
+            context=build_events_context(request, db, user, error="Past events cannot be edited."),
+        )
+
     name = name.strip()
     description = description.strip()
-    date = date.strip()
+    event_date = event_date.strip()
     location = location.strip()
-    if not all([name, description, date, location]):
+
+    if not all([name, description, event_date, location]):
         return templates.TemplateResponse(
             request=request,
             name="events.html",
@@ -233,9 +271,22 @@ def edit_event(
             ),
         )
 
+    if event_date < today:
+        return templates.TemplateResponse(
+            request=request,
+            name="events.html",
+            context=build_events_context(
+                request,
+                db,
+                user,
+                error="You cannot set an event date in the past.",
+                editing_event_id=event_id,
+            ),
+        )
+
     event.name = name
     event.description = description
-    event.date = date
+    event.date = event_date
     event.location = location
     db.commit()
 

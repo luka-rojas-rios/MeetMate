@@ -1,92 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Dashboard</title>
-  <style>
-    :root {
-      --bg: #f3f6fb;
-      --card: rgba(255,255,255,0.92);
-      --text: #15304b;
-      --muted: #63758a;
-      --primary: #1d73e8;
-      --primary-dark: #1459b6;
-      --secondary: #ebf2fb;
-      --border: #d8e2f0;
-      --shadow: 0 18px 45px rgba(19, 42, 76, 0.12);
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 42%, #eaf0f8 100%);
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 18px;
-    }
-    .shell { width: 100%; max-width: 1040px; }
-    .hero {
-      background: linear-gradient(135deg, #ffffff, #eef5ff);
-      border: 1px solid rgba(216, 226, 240, 0.8);
-      box-shadow: var(--shadow);
-      border-radius: 28px;
-      overflow: hidden;
-    }
-    .hero-main { padding: 42px; }
-    .eyebrow {
-      display: inline-flex;
-      gap: 8px;
-      align-items: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: #eaf3ff;
-      color: var(--primary-dark);
-      font-weight: 700;
-      font-size: 13px;
-      margin-bottom: 18px;
-    }
-    h1 { font-size: 42px; line-height: 1.05; margin: 0 0 12px; }
-    .actions { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 14px; }
-    .btn {
-      text-decoration: none;
-      padding: 16px 18px;
-      border-radius: 18px;
-      border: 1px solid var(--border);
-      background: white;
-      color: var(--text);
-      font-weight: 700;
-      transition: .2s ease;
-      box-shadow: 0 10px 26px rgba(17, 38, 68, 0.06);
-    }
-    .btn:hover { transform: translateY(-1px); }
-    .btn.primary { background: var(--primary); border-color: var(--primary); color: white; }
-    .btn.primary:hover { background: var(--primary-dark); }
-    @media (max-width: 850px) {
-      .hero-main { padding: 28px; }
-      .actions { grid-template-columns: 1fr; }
-      h1 { font-size: 34px; }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <div class="shell">
-    <div class="hero">
-      <section class="hero-main">
-        <div class="eyebrow">MeetMate · Student platform</div>
-        <h1>Welcome back, {{ username }}</h1>
-        <div class="actions">
-          <a class="btn primary" href="/events">Events and announcements</a>
-          <a class="btn" href="/match-profile">Matching profile</a>
-          <a class="btn" href="/edit-profile">Edit personal profile</a>
-          <a class="btn" href="/events#add-event">Quick add event</a>
-          <a class="ghost-btn" href="/feedback">Share your experience</a>
-        </div>
-      </section>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/events">Events</a>
+      <a href="/my-matches">My Matches</a>
+      <a href="/match-profile">Matching Profile</a>
+      <a href="/edit-profile">Profile</a>
+      <a href="/feedback">Feedback</a>
+      <a href="/logout" class="danger-link">Logout</a>
     </div>
-  </div>
+  </nav>
+
+  <main class="dashboard-layout">
+
+    <section class="dashboard-hero hero-profile">
+      <div class="profile-summary">
+        <img
+          class="avatar-xl"
+          src="{% if user.profile_photo %}/static/{{ user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+          alt="Foto de perfil"
+        >
+
+        <div>
+          <p class="eyebrow">Your space</p>
+          <h1>
+            Hello,
+            {% if user.first_name %}
+              {{ user.first_name }}
+            {% else %}
+              {{ user.username }}
+            {% endif %}
+          </h1>
+          <p>
+            Manage your events, matches, profile and experience in MeetMate.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+
+      <article class="action-card">
+        <span class="card-icon">👤</span>
+        <h2>Personal Profile</h2>
+        <p>Add your details and a photo so other users know who you are.</p>
+        <a href="/edit-profile" class="btn btn-primary">Edit Profile</a>
+      </article>
+
+      <article class="action-card">
+        <span class="card-icon">🤝</span>
+        <h2>Matching</h2>
+        <p>Find a compatible person based on your matching profile.</p>
+
+        <div class="button-row">
+          <a href="/find-match" class="btn btn-primary">Find Match</a>
+          <a href="/my-matches" class="btn btn-secondary">My Matches</a>
+        </div>
+      </article>
+
+      <article class="action-card">
+        <span class="card-icon">📅</span>
+        <h2>Events</h2>
+        <p>Create activities, sign up for plans and review your past events.</p>
+
+        <div class="button-row">
+          <a href="/events" class="btn btn-primary">View Events</a>
+          <a href="/events?view=mine" class="btn btn-secondary">My Events</a>
+        </div>
+      </article>
+
+      <article class="action-card">
+        <span class="card-icon">⭐</span>
+        <h2>Feedback</h2>
+
+        {% if feedback_status.has_feedback %}
+          <p>You have already submitted your experience. You can update it at any time.</p>
+          <a href="/feedback" class="btn btn-primary">Edit Feedback</a>
+        {% elif feedback_status.can_leave_feedback %}
+          <p>You have already used the app. Tell us how your experience was.</p>
+          <a href="/feedback" class="btn btn-primary">Leave Feedback</a>
+        {% else %}
+          <p>
+            First complete your profile, create an event or sign up for one to be able to
+            rate your experience.
+          </p>
+          <a href="/feedback" class="btn btn-secondary">View Status</a>
+        {% endif %}
+
+        <a href="/feedback/stats" class="text-link">View Statistics</a>
+      </article>
+
+    </section>
+  </main>
+
 </body>
 </html>

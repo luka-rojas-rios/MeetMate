@@ -1,339 +1,189 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Edit Profile</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f6f8fb;
-      color: #333;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 24px;
-    }
-    .form-wrapper { width: 100%; max-width: 760px; }
-    .card {
-      background: white;
-      border-radius: 14px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-      padding: 28px;
-    }
-    h1 { color: #1f3c88; margin-bottom: 10px; }
-    .subtitle { color: #556; margin-bottom: 20px; }
-    .top-actions { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
-    .top-actions a {
-      text-decoration: none; background: #eef4ff; color: #1f3c88; padding: 10px 14px; border-radius: 8px;
-      font-weight: 600;
-    }
-    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .full { grid-column: 1 / -1; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; }
-    select, button {
-      width: 100%; padding: 11px 12px; border: 1px solid #ccd3df; border-radius: 8px; font-size: 1rem;
-      background: #fff;
-    }
-    select:focus { outline: none; border-color: #0077cc; box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.12); }
-    .hidden { display: none; }
-    .message-box, .error-box {
-      margin-bottom: 18px; padding: 14px 16px; border-radius: 10px;
-    }
-    .message-box { background: #e9f5ff; border-left: 5px solid #0077cc; }
-    .error-box { background: #ffeceb; border-left: 5px solid #d93025; }
-    .submit-btn {
-      margin-top: 20px; background: #0077cc; color: white; font-weight: bold; cursor: pointer; border: none;
-    }
-    .submit-btn:hover { background: #005fa3; }
-    .match-box {
-      margin-bottom: 18px;
-      padding: 18px;
-      border-radius: 12px;
-      border: 1px solid #d8e6f7;
-      background: #f8fbff;
-    }
-    .match-box h2 {
-      color: #1f3c88;
-      margin-bottom: 10px;
-    }
-    .match-box ul {
-      margin-top: 12px;
-      padding-left: 20px;
-    }
-    .match-box li {
-      margin-bottom: 8px;
-    }
-    .match-actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-top: 18px;
-    }
-    .match-actions form {
-      flex: 1;
-    }
-    .match-actions button {
-      width: 100%;
-    }
-    .secondary-btn {
-      background: #6c7a89;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .danger-btn {
-      background: #d93025;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-    .status-pill {
-      display: inline-block;
-      background: #eaf3ff;
-      color: #1f3c88;
-      font-weight: 700;
-      padding: 8px 12px;
-      border-radius: 999px;
-      margin-bottom: 12px;
-    } 
-    @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Matching Profile · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <div class="form-wrapper">
-    <div class="card">
-      <div class="top-actions">
-        <a href="/match-profile">Match view</a>
-        <a href="/edit-profile">Edit profile</a>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/dashboard">Panel</a>
+      <a href="/my-matches">My Matches</a>
+      <a href="/events">Events</a>
+      <a href="/feedback">Feedback</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
+
+  <main class="form-page">
+    <section class="split-card">
+      <div class="split-visual matching-visual">
+        <div>
+          <p class="eyebrow">MATCHING</p>
+          <h1>Find compatible people</h1>
+          <p>
+            Complete your preferences to find profiles with compatible interests,
+            languages and universities.
+          </p>
+        </div>
       </div>
 
-      <h1>Start your first match!</h1>
-      <p class="subtitle">Keep your information up to date to improve your matching results.</p>
+      <div class="split-content">
+        {% if error %}
+          <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
 
-      {% if message %}
-        <div class="message-box">{{ message }}</div>
-      {% endif %}
+        {% if success %}
+          <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
 
-      {% if error %}
-        <div class="error-box">{{ error }}</div>
-      {% endif %}
+        <form action="/match-profile" method="post" class="form">
+          <label for="user_type">User Type</label>
+          <select id="user_type" name="user_type" required>
+            <option value="">Select an option</option>
+            <option value="Exchange" {% if user.user_type == "Exchange" %}selected{% endif %}>Exchange</option>
+            <option value="Local" {% if user.user_type == "Local" %}selected{% endif %}>Local</option>
+          </select>
 
-      {% if current_match and current_match_user %}
-      <div class="match-box">
-        <div class="status-pill">Current status: {{ current_match_status }}</div>
-        <h2>Your current match</h2>
+          <div class="two-columns">
+            <div>
+              <label for="language">Main Language</label>
+              <select id="language" name="language" required>
+                <option value="">Select a language</option>
+                <option value="Spanish" {% if user.language == "Spanish" %}selected{% endif %}>Spanish</option>
+                <option value="English" {% if user.language == "English" %}selected{% endif %}>English</option>
+                <option value="French" {% if user.language == "French" %}selected{% endif %}>French</option>
+                <option value="German" {% if user.language == "German" %}selected{% endif %}>German</option>
+                <option value="Italian" {% if user.language == "Italian" %}selected{% endif %}>Italian</option>
+                <option value="Portuguese" {% if user.language == "Portuguese" %}selected{% endif %}>Portuguese</option>
+                <option value="Dutch" {% if user.language == "Dutch" %}selected{% endif %}>Dutch</option>
+              </select>
+            </div>
 
-        <p><strong>User:</strong> {{ current_match_user.username }}</p>
-        <p><strong>University:</strong> {{ current_match_user.home_university or current_match_user.exchange_university }}</p>
-        <p><strong>Language:</strong> {{ current_match_user.language }}</p>
-        <p><strong>Compatibility score:</strong> {{ current_match_score }}</p>
-
-        <ul>
-          {% for reason in current_match_reasons %}
-            <li>{{ reason }}</li>
-         {% endfor %}
-        </ul>
-
-        <div class="match-actions">
-          {% if current_match_status == "pending" %}
-            <form method="POST" action="/matches/{{ current_match.id }}/accept">
-              <button type="submit" class="submit-btn">Accept match</button>
-            </form>
-            <form method="POST" action="/matches/{{ current_match.id }}/reject">
-                <button type="submit" class="danger-btn">Reject match</button>
-          </form>
-          {% elif current_match_status == "accepted" %}
-            <form method="POST" action="/matches/{{ current_match.id }}/complete">
-              <button type="submit" class="submit-btn">Complete match</button>
-            </form>
-            <form method="POST" action="/matches/{{ current_match.id }}/cancel">
-              <button type="submit" class="secondary-btn">Cancel match</button>
-            </form>
-            {% endif %}
-          </div>
-        </div>
-    {% endif %}
-
-      <form id="studentForm" method="POST" action="/submit_match_profile">
-        <div class="grid">
-          <div>
-            <label for="user_type">Student type</label>
-            <select id="user_type" name="user_type" required>
-              <option value="">Select an option</option>
-              <option value="local" {% if user and user.user_type == 'local' %}selected{% endif %}>Local</option>
-              <option value="exchange" {% if user and user.user_type == 'exchange' %}selected{% endif %}>Exchange</option>
-            </select>
+            <div>
+              <label for="language_2">Second Language</label>
+              <select id="language_2" name="language_2">
+                <option value="">No second language</option>
+                <option value="Spanish" {% if user.language_2 == "Spanish" %}selected{% endif %}>Spanish</option>
+                <option value="English" {% if user.language_2 == "English" %}selected{% endif %}>English</option>
+                <option value="French" {% if user.language_2 == "French" %}selected{% endif %}>French</option>
+                <option value="German" {% if user.language_2 == "German" %}selected{% endif %}>German</option>
+                <option value="Italian" {% if user.language_2 == "Italian" %}selected{% endif %}>Italian</option>
+                <option value="Portuguese" {% if user.language_2 == "Portuguese" %}selected{% endif %}>Portuguese</option>
+                <option value="Dutch" {% if user.language_2 == "Dutch" %}selected{% endif %}>Dutch</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label for="language">Language 1</label>
-            <select id="language" name="language" required>
-              <option value="">Select a language</option>
-            </select>
+          <div class="two-columns">
+            <div>
+              <label for="home_university">Home University</label>
+              <select id="home_university" name="home_university" required>
+                <option value="">Select a university</option>
+                <option value="Universidad de Sevilla" {% if user.home_university == "Universidad de Sevilla" %}selected{% endif %}>Sevilla University</option>
+                <option value="Universidad de Granada" {% if user.home_university == "Universidad de Granada" %}selected{% endif %}>Granada University</option>
+                <option value="Universidad Complutense de Madrid" {% if user.home_university == "Universidad Complutense de Madrid" %}selected{% endif %}>Complutense University of Madrid</option>
+                <option value="Universitat de Barcelona" {% if user.home_university == "Universitat de Barcelona" %}selected{% endif %}>Barcelona University</option>
+                <option value="Universidad de Valencia" {% if user.home_university == "Universidad de Valencia" %}selected{% endif %}>Valencia University</option>
+                <option value="Otra" {% if user.home_university == "Otra" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="exchange_university">Exchange University</label>
+              <select id="exchange_university" name="exchange_university" required>
+                <option value="">Select a university</option>
+                <option value="Universidad de Sevilla" {% if user.exchange_university == "Universidad de Sevilla" %}selected{% endif %}>Sevilla University</option>
+                <option value="Universidad de Granada" {% if user.exchange_university == "Universidad de Granada" %}selected{% endif %}>Granada University</option>
+                <option value="Universidad Complutense de Madrid" {% if user.exchange_university == "Universidad Complutense de Madrid" %}selected{% endif %}>Complutense University of Madrid</option>
+                <option value="Universitat de Barcelona" {% if user.exchange_university == "Universitat de Barcelona" %}selected{% endif %}>Barcelona University</option>
+                <option value="Universidad de Valencia" {% if user.exchange_university == "Universidad de Valencia" %}selected{% endif %}>Valencia University</option>
+                <option value="Otra" {% if user.exchange_university == "Otra" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label for="language2">Language 2</label>
-            <select id="language2" name="language2">
-              <option value="">None</option>
-            </select>
+          <div class="two-columns">
+            <div>
+              <label for="favorite_sport_1">Favorite Sport 1</label>
+              <select id="favorite_sport_1" name="favorite_sport_1">
+                <option value="">Select an option</option>
+                <option value="Fútbol" {% if user.favorite_sport_1 == "Fútbol" %}selected{% endif %}>Soccer</option>
+                <option value="Baloncesto" {% if user.favorite_sport_1 == "Baloncesto" %}selected{% endif %}>Basketball</option>
+                <option value="Tenis" {% if user.favorite_sport_1 == "Tenis" %}selected{% endif %}>Tennis</option>
+                <option value="Natación" {% if user.favorite_sport_1 == "Natación" %}selected{% endif %}>Swimming</option>
+                <option value="Running" {% if user.favorite_sport_1 == "Running" %}selected{% endif %}>Running</option>
+                <option value="Voleibol" {% if user.favorite_sport_1 == "Voleibol" %}selected{% endif %}>Volleyball</option>
+                <option value="Gimnasio" {% if user.favorite_sport_1 == "Gimnasio" %}selected{% endif %}>Gymnastics</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="favorite_sport_2">Favorite Sport 2</label>
+              <select id="favorite_sport_2" name="favorite_sport_2">
+                <option value="">Select an option</option>
+                <option value="Fútbol" {% if user.favorite_sport_2 == "Fútbol" %}selected{% endif %}>Soccer</option>
+                <option value="Baloncesto" {% if user.favorite_sport_2 == "Baloncesto" %}selected{% endif %}>Basketball</option>
+                <option value="Tenis" {% if user.favorite_sport_2 == "Tenis" %}selected{% endif %}>Tennis</option>
+                <option value="Natación" {% if user.favorite_sport_2 == "Natación" %}selected{% endif %}>Swimming</option>
+                <option value="Running" {% if user.favorite_sport_2 == "Running" %}selected{% endif %}>Running</option>
+                <option value="Voleibol" {% if user.favorite_sport_2 == "Voleibol" %}selected{% endif %}>Volleyball</option>
+                <option value="Gimnasio" {% if user.favorite_sport_2 == "Gimnasio" %}selected{% endif %}>Gymnastics</option>
+              </select>
+            </div>
           </div>
 
-          <div id="universitySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
-            <label for="country">Country</label>
-            <select id="country" name="country" required>
-              <option value="">Select a country</option>
-            </select>
+          <div class="two-columns">
+            <div>
+              <label for="hobby_1">Hobby 1</label>
+              <select id="hobby_1" name="hobby_1">
+                <option value="">Select an option</option>
+                <option value="Viajar" {% if user.hobby_1 == "Viajar" %}selected{% endif %}>Travel</option>
+                <option value="Leer" {% if user.hobby_1 == "Leer" %}selected{% endif %}>Read</option>
+                <option value="Cocinar" {% if user.hobby_1 == "Cocinar" %}selected{% endif %}>Cook</option>
+                <option value="Música" {% if user.hobby_1 == "Música" %}selected{% endif %}>Music</option>
+                <option value="Series y cine" {% if user.hobby_1 == "Series y cine" %}selected{% endif %}>TV Shows and Movies</option>
+                <option value="Senderismo" {% if user.hobby_1 == "Senderismo" %}selected{% endif %}>Hiking</option>
+                <option value="Videojuegos" {% if user.hobby_1 == "Videojuegos" %}selected{% endif %}>Video Games</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="hobby_2">Hobby 2</label>
+              <select id="hobby_2" name="hobby_2">
+                <option value="">Select an option</option>
+                <option value="Viajar" {% if user.hobby_2 == "Viajar" %}selected{% endif %}>Travel</option>
+                <option value="Leer" {% if user.hobby_2 == "Leer" %}selected{% endif %}>Read</option>
+                <option value="Cocinar" {% if user.hobby_2 == "Cocinar" %}selected{% endif %}>Cook</option>
+                <option value="Música" {% if user.hobby_2 == "Música" %}selected{% endif %}>Music</option>
+                <option value="Series y cine" {% if user.hobby_2 == "Series y cine" %}selected{% endif %}>TV Shows and Movies</option>
+                <option value="Senderismo" {% if user.hobby_2 == "Senderismo" %}selected{% endif %}>Hiking</option>
+                <option value="Videojuegos" {% if user.hobby_2 == "Videojuegos" %}selected{% endif %}>Video Games</option>
+              </select>
+            </div>
           </div>
 
-          <div id="citySection" class="{% if not user or not user.user_type %}hidden{% endif %}">
-            <label for="city">City</label>
-            <select id="city" name="city" required>
-              <option value="">Select a city</option>
-            </select>
+          <div class="button-row">
+            <button type="submit" name="action" value="save" class="btn btn-secondary">
+              Save profile
+            </button>
+
+            <button type="submit" name="action" value="find_match" class="btn btn-primary">
+              Save and Find match
+            </button>
           </div>
+        </form>
+      </div>
+    </section>
+  </main>
 
-          <div class="full {% if not user or not user.user_type %}hidden{% endif %}" id="universityField">
-            <label for="university">University</label>
-            <select id="university" name="university" required>
-              <option value="">Select a university</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="hobby_1">Hobby 1</label>
-            <select id="hobby_1" name="hobby_1">
-              <option value="">Select one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="hobby_2">Hobby 2</label>
-            <select id="hobby_2" name="hobby_2">
-              <option value="">Select another one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="favorite_sport_1">Favorite sport 1</label>
-            <select id="favorite_sport_1" name="favorite_sport_1">
-              <option value="">Select one</option>
-            </select>
-          </div>
-
-          <div>
-            <label for="favorite_sport_2">Favorite sport 2</label>
-            <select id="favorite_sport_2" name="favorite_sport_2">
-              <option value="">Select another one</option>
-            </select>
-          </div>
-        </div>
-
-        <button class="submit-btn" type="submit">Save match results</button>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    const universityData = {{ university_data | tojson }};
-    const languages = {{ languages | tojson }};
-    const hobbiesList = {{ hobbies | tojson }};
-    const sportsList = {{ sports | tojson }};
-
-    const currentValues = {
-      language: {{ (user.language if user else '') | tojson }},
-      language2: {{ (user.language_2 if user else '') | tojson }},
-      hobby1: {{ (user.hobby_1 if user else '') | tojson }},
-      hobby2: {{ (user.hobby_2 if user else '') | tojson }},
-      sport1: {{ (user.favorite_sport_1 if user else '') | tojson }},
-      sport2: {{ (user.favorite_sport_2 if user else '') | tojson }},
-      country: {{ (selected_country or '') | tojson }},
-      city: {{ (selected_city or '') | tojson }},
-      university: {{ (selected_university or '') | tojson }}
-    };
-
-    function populateSelect(selectId, values, selectedValue = "", allowEmpty = false, emptyLabel = "Select an option") {
-      const select = document.getElementById(selectId);
-      select.innerHTML = "";
-      const first = document.createElement('option');
-      first.value = "";
-      first.textContent = emptyLabel;
-      select.appendChild(first);
-
-      values.forEach(value => {
-        const option = document.createElement('option');
-        option.value = value;
-        option.textContent = value;
-        if (selectedValue === value) option.selected = true;
-        select.appendChild(option);
-      });
-
-      if (!allowEmpty && selectedValue && !values.includes(selectedValue)) {
-        select.value = "";
-      }
-    }
-
-    function loadCities(selectedCountry, selectedCity = "") {
-      const citySelect = document.getElementById('city');
-      const universitiesSelect = document.getElementById('university');
-      citySelect.innerHTML = '<option value="">Select a city</option>';
-      universitiesSelect.innerHTML = '<option value="">Select a university</option>';
-
-      if (!selectedCountry || !universityData[selectedCountry]) return;
-
-      const cities = Object.keys(universityData[selectedCountry]);
-      cities.forEach(city => {
-        const option = document.createElement('option');
-        option.value = city;
-        option.textContent = city;
-        if (city === selectedCity) option.selected = true;
-        citySelect.appendChild(option);
-      });
-    }
-
-    function loadUniversities(selectedCountry, selectedCity, selectedUniversity = "") {
-      const universitiesSelect = document.getElementById('university');
-      universitiesSelect.innerHTML = '<option value="">Select a university</option>';
-
-      if (!selectedCountry || !selectedCity || !universityData[selectedCountry] || !universityData[selectedCountry][selectedCity]) return;
-
-      universityData[selectedCountry][selectedCity].forEach(university => {
-        const option = document.createElement('option');
-        option.value = university;
-        option.textContent = university;
-        if (university === selectedUniversity) option.selected = true;
-        universitiesSelect.appendChild(option);
-      });
-    }
-
-    function toggleUniversitySection() {
-      const hasType = document.getElementById('user_type').value !== '';
-      document.getElementById('universitySection').classList.toggle('hidden', !hasType);
-      document.getElementById('citySection').classList.toggle('hidden', !hasType);
-      document.getElementById('universityField').classList.toggle('hidden', !hasType);
-    }
-
-    populateSelect('language', languages, currentValues.language, false, 'Select a language');
-    populateSelect('language2', languages, currentValues.language2, true, 'None');
-    populateSelect('hobby_1', hobbiesList, currentValues.hobby1, true, 'Select one');
-    populateSelect('hobby_2', hobbiesList, currentValues.hobby2, true, 'Select another one');
-    populateSelect('favorite_sport_1', sportsList, currentValues.sport1, true, 'Select one');
-    populateSelect('favorite_sport_2', sportsList, currentValues.sport2, true, 'Select another one');
-    populateSelect('country', Object.keys(universityData), currentValues.country, false, 'Select a country');
-    loadCities(currentValues.country, currentValues.city);
-    loadUniversities(currentValues.country, currentValues.city, currentValues.university);
-    toggleUniversitySection();
-
-    document.getElementById('user_type').addEventListener('change', toggleUniversitySection);
-    document.getElementById('country').addEventListener('change', function () {
-      loadCities(this.value);
-      loadUniversities(this.value, '');
-    });
-    document.getElementById('city').addEventListener('change', function () {
-      loadUniversities(document.getElementById('country').value, this.value);
-    });
-  </script>
 </body>
 </html>

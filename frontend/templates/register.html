@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-page campus-bg">
+
+  <main class="auth-card">
+    <a href="/" class="brand">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
+
+    <h1>Create account</h1>
+    <p class="auth-subtitle">
+      Join MeetMate to discover events, find matches and share your university experience.
+    </p>
+
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form action="/register" method="post" class="form" id="register-form">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        type="text"
+        name="username"
+        required
+        placeholder="Choose a username"
+        oninvalid="this.setCustomValidity('Please enter a username.')"
+        oninput="this.setCustomValidity('')"
+      >
+
+      <label for="password">Password</label>
+      <div class="password-field">
+        <input
+          id="password"
+          type="password"
+          name="password"
+          required
+          minlength="8"
+          placeholder="Create a secure password"
+          oninvalid="this.setCustomValidity('Please enter a valid password.')"
+          oninput="this.setCustomValidity('')"
+        >
+
+        <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Show or hide password">
+          <img src="/static/eye.png" alt="">
+        </button>
+      </div>
+
+      <p class="muted small-text">
+        The password must contain at least 8 characters, one uppercase letter,
+        one lowercase letter, one number and one special character.
+      </p>
+
+      <label for="security_question">Security Question</label>
+      <select
+        id="security_question"
+        name="security_question"
+        required
+        oninvalid="this.setCustomValidity('Please select a security question.')"
+        onchange="this.setCustomValidity('')"
+      >
+        <option value="">Select a question</option>
+        <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+        <option value="What city were you born in?">What city were you born in?</option>
+        <option value="What is your favorite food?">What is your favorite food?</option>
+        <option value="What was the name of your first school?">What was the name of your first school?</option>
+        <option value="What is your favorite movie?">What is your favorite movie?</option>
+      </select>
+
+      <label for="security_answer">Security Answer</label>
+      <input
+        id="security_answer"
+        type="text"
+        name="security_answer"
+        required
+        placeholder="Enter your answer"
+        oninvalid="this.setCustomValidity('Please enter your security answer.')"
+        oninput="this.setCustomValidity('')"
+      >
+
+      <button type="submit" class="btn btn-primary full">
+        Create account
+      </button>
+    </form>
+
+    <p class="auth-footer">
+      Already have an account?
+      <a href="/login">Log in</a>
+    </p>
+  </main>
+
+  <script>
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+
+      if (input.type === "password") {
+        input.type = "text";
+      } else {
+        input.type = "password";
+      }
+    }
+  </script>
+
+</body>
+</html>

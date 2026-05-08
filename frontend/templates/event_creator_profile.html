@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organizer · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/events">Events</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
+
+  <main class="profile-detail-page">
+    <section class="profile-detail-card">
+      <div class="profile-detail-header">
+        <img
+          class="avatar-xl"
+          src="{% if creator.profile_photo %}/static/{{ creator.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+          alt="Organizer photo"
+        >
+
+        <div>
+          <p class="eyebrow dark">Organizer</p>
+          <h1>
+            {% if creator.first_name or creator.last_name %}
+              {{ creator.first_name or '' }} {{ creator.last_name or '' }}
+            {% else %}
+              {{ creator.username }}
+            {% endif %}
+          </h1>
+          <p class="muted">@{{ creator.username }}</p>
+        </div>
+      </div>
+
+      <section class="creator-rating-summary">
+        <div class="stat-card">
+          <span>Average rating</span>
+          <strong>
+            {% if stats.average %}
+              ⭐ {{ stats.average }}/5
+            {% else %}
+              No rating
+            {% endif %}
+          </strong>
+        </div>
+
+        <div class="stat-card">
+          <span>Reliability</span>
+          <strong>{{ stats.label }}</strong>
+        </div>
+
+        <div class="stat-card">
+          <span>Reviews</span>
+          <strong>{{ stats.count }}</strong>
+        </div>
+      </section>
+
+      {% if creator.biography %}
+        <div class="bio-box">
+          <h2>About the organizer</h2>
+          <p>{{ creator.biography }}</p>
+        </div>
+      {% endif %}
+
+      <section class="feedback-list-card">
+        <h2>Feedback received as organizer</h2>
+
+        {% if creator_reviews %}
+          <div class="feedback-list">
+            {% for review in creator_reviews %}
+              <article class="feedback-item">
+                <div>
+                  <strong>⭐ {{ review.creator_rating }}/5</strong>
+                  <p>{{ review.creator_comment or "No comment about the organizer." }}</p>
+                  <p class="muted small-text">
+                    Event: {{ review.event.name }}
+                  </p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state embedded">
+            <p>No feedback received as organizer yet.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="feedback-list-card">
+        <h2>Events created</h2>
+
+        {% if created_events %}
+          <div class="feedback-list">
+            {% for event in created_events %}
+              <article class="feedback-item">
+                <div>
+                  <strong>{{ event.name }}</strong>
+                  <p>{{ event.date }} · {{ event.location }}</p>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="empty-state embedded">
+            <p>This user has not created any events yet.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <div class="button-row">
+        <a href="/events" class="btn btn-primary">Back to events</a>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

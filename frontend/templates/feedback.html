@@ -1,310 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Feedback - MeetMate</title>
-  <style>
-    :root {
-      --bg: #f4f7fb;
-      --card: rgba(255,255,255,0.96);
-      --text: #17324d;
-      --muted: #6e8198;
-      --primary: #1d73e8;
-      --primary-dark: #1459b6;
-      --border: #d8e2f0;
-      --shadow: 0 18px 45px rgba(19, 42, 76, 0.12);
-      --success-bg: #eaf8ee;
-      --success-border: #b8e0c2;
-      --success-text: #23623b;
-      --error-bg: #fff0f0;
-      --error-border: #f3c2c2;
-      --error-text: #963333;
-      --star: #d0d7e2;
-      --star-active: #f5b301;
-    }
-
-    * { box-sizing: border-box; }
-
-    body {
-      margin: 0;
-      font-family: Inter, "Segoe UI", Arial, sans-serif;
-      background: radial-gradient(circle at top, #ffffff 0%, var(--bg) 42%, #eaf0f8 100%);
-      color: var(--text);
-    }
-
-    .page {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 28px 18px 48px;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 22px;
-    }
-
-    .brand {
-      font-size: 28px;
-      font-weight: 800;
-    }
-
-    .ghost-btn, .primary-btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 16px;
-      text-decoration: none;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: .2s ease;
-    }
-
-    .ghost-btn {
-      background: white;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-
-    .primary-btn {
-      background: var(--primary);
-      color: white;
-      box-shadow: 0 12px 24px rgba(29, 115, 232, .22);
-    }
-
-    .primary-btn:hover {
-      background: var(--primary-dark);
-    }
-
-    .panel {
-      background: var(--card);
-      border: 1px solid rgba(216, 226, 240, 0.85);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
-      overflow: hidden;
-      padding: 28px;
-    }
-
-    h1, h2, h3 {
-      margin: 0;
-    }
-
-    h1 {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
-
-    .subtitle {
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 24px;
-    }
-
-    .flash {
-      margin-bottom: 18px;
-      padding: 14px 16px;
-      border-radius: 16px;
-      font-weight: 600;
-    }
-
-    .flash.success {
-      background: var(--success-bg);
-      border: 1px solid var(--success-border);
-      color: var(--success-text);
-    }
-
-    .flash.error {
-      background: var(--error-bg);
-      border: 1px solid var(--error-border);
-      color: var(--error-text);
-    }
-
-    form {
-      display: grid;
-      gap: 22px;
-    }
-
-    .question-block {
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: #fbfdff;
-    }
-
-    .question-title {
-      font-size: 18px;
-      font-weight: 800;
-      margin-bottom: 8px;
-    }
-
-    .question-help {
-      color: var(--muted);
-      font-size: 14px;
-      margin-bottom: 14px;
-    }
-
-    .stars {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      direction: rtl;
-      justify-content: flex-end;
-    }
-
-    .stars input {
-      display: none;
-    }
-
-    .stars label {
-      font-size: 34px;
-      color: var(--star);
-      cursor: pointer;
-      transition: transform .15s ease, color .15s ease;
-    }
-
-    .stars label:hover,
-    .stars label:hover ~ label {
-      color: var(--star-active);
-      transform: scale(1.06);
-    }
-
-    .stars input:checked ~ label {
-      color: var(--star-active);
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 120px;
-      resize: vertical;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: #fbfdff;
-      padding: 14px;
-      font: inherit;
-      color: var(--text);
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 700px) {
-      .topbar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .stars {
-        justify-content: flex-start;
-      }
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <div class="page">
-    <div class="topbar">
-      <div class="brand">MeetMate feedback</div>
-      <a class="ghost-btn" href="/dashboard">Back to dashboard</a>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/dashboard">Panel</a>
+      <a href="/events">Events</a>
+      <a href="/match-profile">Matching</a>
+      <a href="/feedback/stats">Statistics</a>
+      <a href="/logout" class="danger-link">Logout</a>
     </div>
+  </nav>
 
-    {% if success %}
-      <div class="flash success">{{ success }}</div>
-    {% endif %}
+  <main class="form-page">
+    <section class="split-card">
+      <div class="split-visual feedback-visual">
+        <div>
+          <p class="eyebrow">YOUR EXPERIENCE</p>
+          <h1>Help us improve MeetMate</h1>
+          <p>
+            You can only leave feedback after using the app:
+            completing your profile, creating an event or signing up for one.
+          </p>
+        </div>
+      </div>
 
-    {% if error %}
-      <div class="flash error">{{ error }}</div>
-    {% endif %}
+      <div class="split-content">
+        {% if error %}
+          <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
 
-    <section class="panel">
-      <h1>Share your experience</h1>
-      <p class="subtitle">
-        Rate your experience with the university, the city and your overall stay.
-        Your feedback helps us improve MeetMate for future students.
-      </p>
+        {% if success %}
+          <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
 
-      <form method="POST" action="/feedback">
-        <div class="question-block">
-          <div class="question-title">University experience</div>
-          <div class="question-help">How would you rate your experience with the university?</div>
-          <div class="stars">
-            <input type="radio" id="university-5" name="university_rating" value="5" required>
-            <label for="university-5">★</label>
+        {% if can_leave_feedback %}
+          <h2>
+            {% if feedback %}
+              Edit your feedback
+            {% else %}
+              Leave feedback
+            {% endif %}
+          </h2>
 
-            <input type="radio" id="university-4" name="university_rating" value="4">
-            <label for="university-4">★</label>
+          <form action="/feedback" method="post" class="form">
+            <label>University rating</label>
+            <div class="star-rating">
+              <input type="radio" id="uni5" name="university_rating" value="5" {% if not feedback or feedback.university_rating == 5 %}checked{% endif %}>
+              <label for="uni5">★</label>
 
-            <input type="radio" id="university-3" name="university_rating" value="3">
-            <label for="university-3">★</label>
+              <input type="radio" id="uni4" name="university_rating" value="4" {% if feedback and feedback.university_rating == 4 %}checked{% endif %}>
+              <label for="uni4">★</label>
 
-            <input type="radio" id="university-2" name="university_rating" value="2">
-            <label for="university-2">★</label>
+              <input type="radio" id="uni3" name="university_rating" value="3" {% if feedback and feedback.university_rating == 3 %}checked{% endif %}>
+              <label for="uni3">★</label>
 
-            <input type="radio" id="university-1" name="university_rating" value="1">
-            <label for="university-1">★</label>
+              <input type="radio" id="uni2" name="university_rating" value="2" {% if feedback and feedback.university_rating == 2 %}checked{% endif %}>
+              <label for="uni2">★</label>
+
+              <input type="radio" id="uni1" name="university_rating" value="1" {% if feedback and feedback.university_rating == 1 %}checked{% endif %}>
+              <label for="uni1">★</label>
+            </div>
+
+            <label>City rating</label>
+            <div class="star-rating">
+              <input type="radio" id="city5" name="city_rating" value="5" {% if not feedback or feedback.city_rating == 5 %}checked{% endif %}>
+              <label for="city5">★</label>
+
+              <input type="radio" id="city4" name="city_rating" value="4" {% if feedback and feedback.city_rating == 4 %}checked{% endif %}>
+              <label for="city4">★</label>
+
+              <input type="radio" id="city3" name="city_rating" value="3" {% if feedback and feedback.city_rating == 3 %}checked{% endif %}>
+              <label for="city3">★</label>
+
+              <input type="radio" id="city2" name="city_rating" value="2" {% if feedback and feedback.city_rating == 2 %}checked{% endif %}>
+              <label for="city2">★</label>
+
+              <input type="radio" id="city1" name="city_rating" value="1" {% if feedback and feedback.city_rating == 1 %}checked{% endif %}>
+              <label for="city1">★</label>
+            </div>
+
+            <label>Overall app rating</label>
+            <div class="star-rating">
+              <input type="radio" id="app5" name="overall_rating" value="5" {% if not feedback or feedback.overall_rating == 5 %}checked{% endif %}>
+              <label for="app5">★</label>
+
+              <input type="radio" id="app4" name="overall_rating" value="4" {% if feedback and feedback.overall_rating == 4 %}checked{% endif %}>
+              <label for="app4">★</label>
+
+              <input type="radio" id="app3" name="overall_rating" value="3" {% if feedback and feedback.overall_rating == 3 %}checked{% endif %}>
+              <label for="app3">★</label>
+
+              <input type="radio" id="app2" name="overall_rating" value="2" {% if feedback and feedback.overall_rating == 2 %}checked{% endif %}>
+              <label for="app2">★</label>
+
+              <input type="radio" id="app1" name="overall_rating" value="1" {% if feedback and feedback.overall_rating == 1 %}checked{% endif %}>
+              <label for="app1">★</label>
+            </div>
+
+            <label for="comment">Comment</label>
+            <textarea id="comment" name="comment" rows="5" placeholder="Tell us what you would improve...">{% if feedback %}{{ feedback.comment or '' }}{% endif %}</textarea>
+
+            <button type="submit" class="btn btn-primary full">
+              {% if feedback %}
+                Update feedback
+              {% else %}
+                Leave feedback
+              {% endif %}
+            </button>
+          </form>
+        {% else %}
+          <div class="empty-state embedded">
+            <h2>You cannot leave feedback yet</h2>
+            <p>
+              Complete your profile, create an event or join one to unlock this section.
+            </p>
+            <div class="button-row center">
+              <a href="/edit-profile" class="btn btn-primary">Complete profile</a>
+              <a href="/events" class="btn btn-secondary">View events</a>
+            </div>
           </div>
-        </div>
-
-        <div class="question-block">
-          <div class="question-title">City experience</div>
-          <div class="question-help">How would you rate your experience with the city?</div>
-          <div class="stars">
-            <input type="radio" id="city-5" name="city_rating" value="5" required>
-            <label for="city-5">★</label>
-
-            <input type="radio" id="city-4" name="city_rating" value="4">
-            <label for="city-4">★</label>
-
-            <input type="radio" id="city-3" name="city_rating" value="3">
-            <label for="city-3">★</label>
-
-            <input type="radio" id="city-2" name="city_rating" value="2">
-            <label for="city-2">★</label>
-
-            <input type="radio" id="city-1" name="city_rating" value="1">
-            <label for="city-1">★</label>
-          </div>
-        </div>
-
-        <div class="question-block">
-          <div class="question-title">Overall experience</div>
-          <div class="question-help">How would you rate your overall exchange experience?</div>
-          <div class="stars">
-            <input type="radio" id="overall-5" name="overall_rating" value="5" required>
-            <label for="overall-5">★</label>
-
-            <input type="radio" id="overall-4" name="overall_rating" value="4">
-            <label for="overall-4">★</label>
-
-            <input type="radio" id="overall-3" name="overall_rating" value="3">
-            <label for="overall-3">★</label>
-
-            <input type="radio" id="overall-2" name="overall_rating" value="2">
-            <label for="overall-2">★</label>
-
-            <input type="radio" id="overall-1" name="overall_rating" value="1">
-            <label for="overall-1">★</label>
-          </div>
-        </div>
-
-        <div class="question-block">
-          <div class="question-title">Additional comments</div>
-          <div class="question-help">Optional. Share any thoughts or suggestions.</div>
-          <textarea name="comment" placeholder="Tell us more about your experience..."></textarea>
-        </div>
-
-        <div class="actions">
-          <button class="primary-btn" type="submit">Submit feedback</button>
-          <a class="ghost-btn" href="/dashboard">Cancel</a>
-        </div>
-      </form>
+        {% endif %}
+      </div>
     </section>
-  </div>
+  </main>
+
 </body>
 </html>

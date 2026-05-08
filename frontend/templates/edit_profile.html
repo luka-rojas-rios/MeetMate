@@ -1,147 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Edit Personal Profile</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #eef3f9;
-      padding: 40px;
-      margin: 0;
-    }
-
-    .card {
-      background: white;
-      max-width: 720px;
-      margin: auto;
-      padding: 32px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-
-    h1 {
-      color: #1f5fae;
-      margin-bottom: 10px;
-    }
-
-    p {
-      color: #555;
-      margin-bottom: 24px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 18px;
-    }
-
-    .full {
-      grid-column: 1 / -1;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: bold;
-      color: #23395b;
-    }
-
-    input, select {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #cfd8e3;
-      border-radius: 10px;
-      box-sizing: border-box;
-    }
-
-    .actions {
-      margin-top: 24px;
-      display: flex;
-      gap: 12px;
-    }
-
-    button, a {
-      padding: 12px 18px;
-      border-radius: 10px;
-      text-decoration: none;
-      font-weight: bold;
-      border: none;
-      cursor: pointer;
-    }
-
-    button {
-      background: #0077cc;
-      color: white;
-    }
-
-    a {
-      background: #e9eef5;
-      color: #23395b;
-    }
-
-    .message {
-      margin-top: 20px;
-      padding: 12px;
-      background: #eaf8ea;
-      border: 1px solid #b7e0b7;
-      border-radius: 10px;
-      color: #2b6b2b;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Profile · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <div class="card">
-    <h1>Edit Personal Profile</h1>
-    <p>Update your personal information.</p>
+<body class="page">
 
-    <form method="POST" action="/edit-profile">
-      <div class="grid">
-        <div>
-          <label>First name</label>
-          <input type="text" name="first_name" value="{{ user.first_name or '' }}">
-        </div>
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
 
-        <div>
-          <label>Last name</label>
-          <input type="text" name="last_name" value="{{ user.last_name or '' }}">
-        </div>
+    <div class="topbar-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/my-matches">My Matches</a>
+      <a href="/match-profile">Matching Profile</a>
+      <a href="/events">Events</a>
+      <a href="/feedback">Feedback</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
 
+  <main class="form-page">
+    <section class="split-card">
+      <div class="split-visual profile-visual">
         <div>
-          <label>Birth date</label>
-          <input type="date" name="birth_date" value="{{ user.birth_date or '' }}">
-        </div>
-
-        <div>
-          <label>Sex</label>
-          <select name="sex">
-            <option value="">Select</option>
-            <option value="Female" {% if user.sex == "Female" %}selected{% endif %}>Female</option>
-            <option value="Male" {% if user.sex == "Male" %}selected{% endif %}>Male</option>
-            <option value="Other" {% if user.sex == "Other" %}selected{% endif %}>Other</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Nationality</label>
-          <input type="text" name="nationality" value="{{ user.nationality or '' }}">
-        </div>
-
-        <div>
-          <label>Phone</label>
-          <input type="text" name="phone" value="{{ user.phone or '' }}">
+          <p class="eyebrow">PROFILE</p>
+          <h1>Tell us who you are</h1>
+          <p>
+            Add your details, a photo and a biography so other students
+            can get to know you better when you match.
+          </p>
         </div>
       </div>
 
-      <div class="actions">
-        <button type="submit">Save personal profile</button>
-        <a href="/dashboard">Back to dashboard</a>
-      </div>
-    </form>
+      <div class="split-content">
+        {% if error %}
+          <div class="alert alert-error">{{ error }}</div>
+        {% endif %}
 
-    {% if message %}
-      <div class="message">{{ message }}</div>
-    {% endif %}
-  </div>
+        {% if success %}
+          <div class="alert alert-success">{{ success }}</div>
+        {% endif %}
+
+        <form action="/edit-profile" method="post" enctype="multipart/form-data" class="form">
+          <div class="profile-photo-preview">
+            <img
+              src="{% if user.profile_photo %}/static/{{ user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+              alt="Profile photo"
+            >
+
+            <div>
+              <label for="profile_photo">Profile Photo</label>
+
+              <div class="custom-file-upload">
+                <label for="profile_photo" class="btn btn-secondary">
+                  Choose file
+                </label>
+
+                <span id="file-name" class="file-name-text">
+                  No file chosen
+                </span>
+
+                <input
+                  id="profile_photo"
+                  type="file"
+                  name="profile_photo"
+                  accept=".jpg,.jpeg,.png,.webp"
+                  hidden
+                  onchange="document.getElementById('file-name').textContent = this.files.length ? this.files[0].name : 'No file chosen';"
+                >
+              </div>
+
+              <p class="muted small-text">Allowed formats: JPG, PNG or WEBP.</p>
+            </div>
+          </div>
+
+          <div class="two-columns">
+            <div>
+              <label for="first_name">First Name</label>
+              <input
+                id="first_name"
+                type="text"
+                name="first_name"
+                value="{{ user.first_name or '' }}"
+                placeholder="Your first name"
+              >
+            </div>
+
+            <div>
+              <label for="last_name">Last Name</label>
+              <input
+                id="last_name"
+                type="text"
+                name="last_name"
+                value="{{ user.last_name or '' }}"
+                placeholder="Your last name"
+              >
+            </div>
+          </div>
+
+          <div class="two-columns">
+            <div>
+              <label for="birth_date">Birth Date</label>
+              <input
+                id="birth_date"
+                type="date"
+                name="birth_date"
+                value="{{ user.birth_date or '' }}"
+              >
+            </div>
+
+            <div>
+              <label for="sex">Sex</label>
+              <select id="sex" name="sex">
+                <option value="">I prefer not to say</option>
+                <option value="Mujer" {% if user.sex == "Mujer" %}selected{% endif %}>Woman</option>
+                <option value="Hombre" {% if user.sex == "Hombre" %}selected{% endif %}>Man</option>
+                <option value="Otro" {% if user.sex == "Otro" %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="two-columns">
+            <div>
+              <label for="nationality">Nationality</label>
+              <input
+                id="nationality"
+                type="text"
+                name="nationality"
+                value="{{ user.nationality or '' }}"
+                placeholder="E.g. Spanish, Italian, French..."
+              >
+            </div>
+
+            <div>
+              <label for="phone">Phone</label>
+              <input
+                id="phone"
+                type="text"
+                name="phone"
+                value="{{ user.phone or '' }}"
+                placeholder="E.g. +34 600 000 000"
+              >
+            </div>
+          </div>
+
+          <label for="biography">Biography</label>
+          <textarea
+            id="biography"
+            name="biography"
+            rows="6"
+            maxlength="600"
+            placeholder="Write something about yourself: what you study, what you like to do, what plans you are looking for, what you are like..."
+          >{{ user.biography or '' }}</textarea>
+
+          <p class="muted small-text">Recommended maximum: 600 characters.</p>
+
+          <button type="submit" class="btn btn-primary full">
+            Save Profile
+          </button>
+        </form>
+      </div>
+    </section>
+  </main>
+
 </body>
 </html>

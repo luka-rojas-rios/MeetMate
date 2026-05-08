@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Matches · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/find-match">Find Match</a>
+      <a href="/match-profile">Matching Profile</a>
+      <a href="/events">Events</a>
+      <a href="/feedback">Feedback</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
+
+  <main class="section">
+    <div class="section-title">
+      <p class="eyebrow dark">Matching</p>
+      <h1>My Matches</h1>
+      <p class="muted">
+        Here you can see pending requests, your accepted match and rejected requests.
+      </p>
+    </div>
+
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    {% if success %}
+      <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    <section class="match-section">
+      <h2>Received Pending Requests</h2>
+
+      {% if pending_received %}
+        <div class="events-grid">
+          {% for item in pending_received %}
+            <article class="event-card">
+              <div class="profile-summary">
+                <img
+                  class="avatar-xl"
+                  src="{% if item.other_user.profile_photo %}/static/{{ item.other_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+                  alt="User photo"
+                >
+
+                <div>
+                  <h2>
+                    {% if item.other_user.first_name or item.other_user.last_name %}
+                      {{ item.other_user.first_name or '' }} {{ item.other_user.last_name or '' }}
+                    {% else %}
+                      {{ item.other_user.username }}
+                    {% endif %}
+                  </h2>
+                  <p class="muted">@{{ item.other_user.username }}</p>
+                  <span class="status-pill pending-pill">Pending</span>
+                </div>
+              </div>
+
+              <p class="match-score">
+                Compatibility: {{ item.match.compatibility_score }} points
+              </p>
+
+              {% if item.match.match_reason %}
+                <div class="expired-box">
+                  {{ item.match.match_reason.replace('\n', ' · ') }}
+                </div>
+              {% endif %}
+
+              <div class="button-row">
+                <form action="/matches/{{ item.match.id }}/accept" method="post">
+                  <button type="submit" class="btn btn-primary">Accept</button>
+                </form>
+
+                <form action="/matches/{{ item.match.id }}/reject" method="post">
+                  <button type="submit" class="btn btn-danger">Reject</button>
+                </form>
+
+                <a href="/matches/{{ item.match.id }}" class="btn btn-secondary">View profile</a>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state embedded">
+          <p>You have no pending received requests.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="match-section">
+      <h2>Sent Pending Requests</h2>
+
+      {% if pending_sent %}
+        <div class="events-grid">
+          {% for item in pending_sent %}
+            <article class="event-card">
+              <div class="profile-summary">
+                <img
+                  class="avatar-xl"
+                  src="{% if item.other_user.profile_photo %}/static/{{ item.other_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+                  alt="User photo"
+                >
+
+                <div>
+                  <h2>
+                    {% if item.other_user.first_name or item.other_user.last_name %}
+                      {{ item.other_user.first_name or '' }} {{ item.other_user.last_name or '' }}
+                    {% else %}
+                      {{ item.other_user.username }}
+                    {% endif %}
+                  </h2>
+                  <p class="muted">@{{ item.other_user.username }}</p>
+                  <span class="status-pill pending-pill">Pending</span>
+                </div>
+              </div>
+
+              <p class="muted">
+                You are waiting for this person to accept or reject the request.
+              </p>
+
+              <a href="/matches/{{ item.match.id }}" class="btn btn-secondary">View profile</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state embedded">
+          <p>You have no sent pending requests.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="match-section">
+      <h2>Accepted Match</h2>
+
+      {% if accepted_matches %}
+        <div class="events-grid">
+          {% for item in accepted_matches %}
+            <article class="event-card">
+              <div class="profile-summary">
+                <img
+                  class="avatar-xl"
+                  src="{% if item.other_user.profile_photo %}/static/{{ item.other_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+                  alt="User photo"
+                >
+
+                <div>
+                  <h2>
+                    {% if item.other_user.first_name or item.other_user.last_name %}
+                      {{ item.other_user.first_name or '' }} {{ item.other_user.last_name or '' }}
+                    {% else %}
+                      {{ item.other_user.username }}
+                    {% endif %}
+                  </h2>
+                  <p class="muted">@{{ item.other_user.username }}</p>
+                  <span class="status-pill accepted-pill">Accepted</span>
+                </div>
+              </div>
+
+              <p class="match-score">
+                Compatibility: {{ item.match.compatibility_score }} points
+              </p>
+
+              <a href="/matches/{{ item.match.id }}" class="btn btn-primary">View profile</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state embedded">
+          <p>You have no accepted match.</p>
+        </div>
+      {% endif %}
+    </section>
+
+    <section class="match-section">
+      <h2>Rejected Requests</h2>
+
+      {% if rejected_matches %}
+        <div class="events-grid">
+          {% for item in rejected_matches %}
+            <article class="event-card">
+              <div class="profile-summary">
+                <img
+                  class="avatar-xl"
+                  src="{% if item.other_user.profile_photo %}/static/{{ item.other_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+                  alt="User photo"
+                >
+
+                <div>
+                  <h2>
+                    {% if item.other_user.first_name or item.other_user.last_name %}
+                      {{ item.other_user.first_name or '' }} {{ item.other_user.last_name or '' }}
+                    {% else %}
+                      {{ item.other_user.username }}
+                    {% endif %}
+                  </h2>
+                  <p class="muted">@{{ item.other_user.username }}</p>
+                  <span class="status-pill rejected-pill">Rejected</span>
+                </div>
+              </div>
+
+              <a href="/matches/{{ item.match.id }}" class="btn btn-secondary">View profile</a>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state embedded">
+          <p>You have no rejected requests.</p>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+</body>
+</html>

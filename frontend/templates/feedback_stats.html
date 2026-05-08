@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Feedback Statistics · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/dashboard">Panel</a>
+      <a href="/feedback">My Feedback</a>
+      <a href="/events">Events</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
+
+  <main class="stats-page">
+    <section class="section-title">
+      <p class="eyebrow dark">Feedback</p>
+      <h1>Feedback Statistics</h1>
+      <p class="muted">
+        Summary of the ratings sent by users who have already used MeetMate.
+      </p>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span>Total of responses</span>
+        <strong>{{ stats.total or 0 }}</strong>
+      </article>
+
+      <article class="stat-card">
+        <span>University</span>
+        <strong>
+          {% if stats.university_avg %}
+            {{ "%.1f"|format(stats.university_avg) }}/5
+          {% else %}
+            0/5
+          {% endif %}
+        </strong>
+      </article>
+
+      <article class="stat-card">
+        <span>City</span>
+        <strong>
+          {% if stats.city_avg %}
+            {{ "%.1f"|format(stats.city_avg) }}/5
+          {% else %}
+            0/5
+          {% endif %}
+        </strong>
+      </article>
+
+      <article class="stat-card">
+        <span>App</span>
+        <strong>
+          {% if stats.overall_avg %}
+            {{ "%.1f"|format(stats.overall_avg) }}/5
+          {% else %}
+            0/5
+          {% endif %}
+        </strong>
+      </article>
+    </section>
+
+    <section class="feedback-list-card">
+      <h2>Latest Comments</h2>
+
+      {% if recent_feedback %}
+        <div class="feedback-list">
+          {% for item in recent_feedback %}
+            <article class="feedback-item">
+              <div>
+                <strong>
+                  {% if item.user %}
+                    {{ item.user.username }}
+                  {% else %}
+                    User
+                  {% endif %}
+                </strong>
+                <p>{{ item.comment or "No comment." }}</p>
+              </div>
+
+              <div class="rating-summary">
+                <span>University: {{ item.university_rating }}/5</span>
+                <span>City: {{ item.city_rating }}/5</span>
+                <span>App: {{ item.overall_rating }}/5</span>
+              </div>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="empty-state embedded">
+          <h2>No feedback yet</h2>
+          <p>When users submit their experience, it will appear here.</p>
+        </div>
+      {% endif %}
+    </section>
+  </main>
+
+</body>
+</html>

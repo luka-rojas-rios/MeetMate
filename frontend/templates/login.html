@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Log in · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="auth-page campus-bg">
+
+  <main class="auth-card">
+    <a href="/" class="brand">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
+
+    <h1>Log in</h1>
+    <p class="auth-subtitle">
+      Access your account to view events, matches and your profile.
+    </p>
+
+    {% if error %}
+      <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+
+    <form action="/login" method="post" class="form">
+      <label for="username">Username</label>
+      <input
+        id="username"
+        type="text"
+        name="username"
+        required
+        placeholder="Enter your username"
+        oninvalid="this.setCustomValidity('Please enter your username.')"
+        oninput="this.setCustomValidity('')"
+      >
+
+      <label for="password">Password</label>
+      <div class="password-field">
+        <input
+          id="password"
+          type="password"
+          name="password"
+          required
+          placeholder="Enter your password"
+          oninvalid="this.setCustomValidity('Please enter your password.')"
+          oninput="this.setCustomValidity('')"
+        >
+
+        <button type="button" class="password-toggle" onclick="togglePassword('password')" aria-label="Show or hide password">
+          <img src="/static/eye.png" alt="">
+        </button>
+      </div>
+
+      <button type="submit" class="btn btn-primary full">
+        Log in
+      </button>
+    </form>
+
+    <div class="auth-links">
+      <a href="/forgot-password">Forgot your password?</a>
+    </div>
+
+    <p class="auth-footer">
+      Don’t have an account?
+      <a href="/register">Create account</a>
+    </p>
+  </main>
+
+  <script>
+    function togglePassword(inputId) {
+      const input = document.getElementById(inputId);
+
+      if (input.type === "password") {
+        input.type = "text";
+      } else {
+        input.type = "password";
+      }
+    }
+  </script>
+
+</body>
+</html>

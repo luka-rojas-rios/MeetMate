@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match profile · MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="page">
+
+  <nav class="topbar">
+    <a href="/dashboard" class="brand small">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
+      <span>MeetMate</span>
+    </a>
+
+    <div class="topbar-links">
+      <a href="/dashboard">Dashboard</a>
+      <a href="/my-matches">My Matches</a>
+      <a href="/find-match">Find Match</a>
+      <a href="/events">Events</a>
+      <a href="/logout" class="danger-link">Logout</a>
+    </div>
+  </nav>
+
+  <main class="profile-detail-page">
+    <section class="profile-detail-card">
+
+      {% set university_labels = {
+        "Universidad de Sevilla": "University of Seville",
+        "Universidad de Granada": "University of Granada",
+        "Universidad Complutense de Madrid": "Complutense University of Madrid",
+        "Universidad Francisco de Vitoria": "Francisco de Vitoria University (UFV)",
+        "Universidad Autónoma de Madrid": "Autonomous University of Madrid",
+        "Universidad Carlos III de Madrid": "Carlos III University of Madrid",
+        "Universidad Politécnica de Madrid": "Polytechnic University of Madrid",
+        "Universidad Rey Juan Carlos": "Rey Juan Carlos University",
+        "Universidad de Alcalá": "University of Alcalá",
+        "Universidad Pontificia Comillas": "Comillas Pontifical University",
+        "Universidad CEU San Pablo": "CEU San Pablo University",
+        "Universidad Nebrija": "Nebrija University",
+        "Universidad Europea de Madrid": "European University of Madrid",
+        "IE University": "IE University",
+        "Universitat de Barcelona": "University of Barcelona",
+        "Universitat Autònoma de Barcelona": "Autonomous University of Barcelona",
+        "Universitat Politècnica de Catalunya": "Polytechnic University of Catalonia",
+        "Universitat Pompeu Fabra": "Pompeu Fabra University",
+        "Universidad de Valencia": "University of Valencia",
+        "Universitat de València": "University of Valencia",
+        "Universitat Politècnica de València": "Polytechnic University of Valencia",
+        "Universitat Jaume I": "Jaume I University",
+        "Universidad de Salamanca": "University of Salamanca",
+        "Universidad de Valladolid": "University of Valladolid",
+        "Universidad de Zaragoza": "University of Zaragoza",
+        "Universidad de Navarra": "University of Navarra",
+        "Universidad del País Vasco": "University of the Basque Country",
+        "Universidad de Deusto": "University of Deusto",
+        "Universidad de Málaga": "University of Málaga",
+        "Universidad de Córdoba": "University of Córdoba",
+        "Universidad de Cádiz": "University of Cádiz",
+        "Universidad de Alicante": "University of Alicante",
+        "Universidad Miguel Hernández de Elche": "Miguel Hernández University of Elche",
+        "Universidad de Murcia": "University of Murcia",
+        "Universidad de Oviedo": "University of Oviedo",
+        "Universidad de Cantabria": "University of Cantabria",
+        "Universidad de Santiago de Compostela": "University of Santiago de Compostela",
+        "Universidade da Coruña": "University of A Coruña",
+        "Universidade de Vigo": "University of Vigo",
+        "Universitat de les Illes Balears": "University of the Balearic Islands",
+        "Universidad de La Laguna": "University of La Laguna",
+        "Universidad de Las Palmas de Gran Canaria": "University of Las Palmas de Gran Canaria",
+        "Universidad de Castilla-La Mancha": "University of Castilla-La Mancha",
+        "Universidad de Extremadura": "University of Extremadura",
+        "Universidad de La Rioja": "University of La Rioja",
+        "Otra": "Other"
+      } %}
+
+      {% set sport_labels = {
+        "Fútbol": "Soccer",
+        "Baloncesto": "Basketball",
+        "Tenis": "Tennis",
+        "Natación": "Swimming",
+        "Running": "Running",
+        "Voleibol": "Volleyball",
+        "Gimnasio": "Gym"
+      } %}
+
+      {% set hobby_labels = {
+        "Viajar": "Travel",
+        "Leer": "Reading",
+        "Cocinar": "Cooking",
+        "Música": "Music",
+        "Series y cine": "TV shows and movies",
+        "Senderismo": "Hiking",
+        "Videojuegos": "Video games"
+      } %}
+
+      <div class="profile-detail-header">
+        <img
+          class="avatar-xl"
+          src="{% if matched_user.profile_photo %}/static/{{ matched_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
+          alt="User photo"
+        >
+
+        <div>
+          <p class="eyebrow dark">Match profile</p>
+          <h1>
+            {% if matched_user.first_name or matched_user.last_name %}
+              {{ matched_user.first_name or '' }} {{ matched_user.last_name or '' }}
+            {% else %}
+              {{ matched_user.username }}
+            {% endif %}
+          </h1>
+
+          <p class="muted">@{{ matched_user.username }}</p>
+
+          {% if match %}
+            <p class="match-score">Compatibility: {{ match.compatibility_score }} points</p>
+
+            {% if match.status == "pending" %}
+              <span class="status-pill pending-pill">Pending</span>
+            {% elif match.status == "accepted" %}
+              <span class="status-pill accepted-pill">Accepted</span>
+            {% elif match.status == "rejected" %}
+              <span class="status-pill rejected-pill">Rejected</span>
+            {% endif %}
+          {% endif %}
+        </div>
+      </div>
+
+      {% if matched_user.biography %}
+        <div class="bio-box">
+          <h2>About me</h2>
+          <p>{{ matched_user.biography }}</p>
+        </div>
+      {% endif %}
+
+      {% if match and match.match_reason %}
+        <div class="expired-box">
+          {{
+            match.match_reason
+              .replace("Tenéis perfiles complementarios.", "You have complementary profiles.")
+              .replace("Compartís idioma o idiomas.", "You share one or more languages.")
+              .replace("Tu universidad de origen coincide con su universidad actual.", "Your home university matches their current university.")
+              .replace("Tu universidad actual coincide con su universidad de origen.", "Your current university matches their home university.")
+              .replace("Compartís algún deporte favorito.", "You share at least one favorite sport.")
+              .replace("Tenéis hobbies en común.", "You have hobbies in common.")
+              .replace("Ambos tenéis el perfil de matching completo.", "Both users have completed their matching profile.")
+              .replace("\n", " · ")
+          }}
+        </div>
+      {% endif %}
+
+      <div class="detail-grid">
+        <div class="detail-box">
+          <span>User type</span>
+          <strong>{{ matched_user.user_type or "Not indicated" }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Nationality</span>
+          <strong>{{ matched_user.nationality or "Not indicated" }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Primary language</span>
+          <strong>{{ matched_user.language or "Not indicated" }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Second language</span>
+          <strong>{{ matched_user.language_2 or "Not indicated" }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Home university</span>
+          <strong>{{ university_labels.get(matched_user.home_university, matched_user.home_university or "Not indicated") }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Current university / exchange</span>
+          <strong>{{ university_labels.get(matched_user.exchange_university, matched_user.exchange_university or "Not indicated") }}</strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Favorite sports</span>
+          <strong>
+            {{ sport_labels.get(matched_user.favorite_sport_1, matched_user.favorite_sport_1 or "Not indicated") }}
+            {% if matched_user.favorite_sport_2 %}
+              · {{ sport_labels.get(matched_user.favorite_sport_2, matched_user.favorite_sport_2) }}
+            {% endif %}
+          </strong>
+        </div>
+
+        <div class="detail-box">
+          <span>Hobbies</span>
+          <strong>
+            {{ hobby_labels.get(matched_user.hobby_1, matched_user.hobby_1 or "Not indicated") }}
+            {% if matched_user.hobby_2 %}
+              · {{ hobby_labels.get(matched_user.hobby_2, matched_user.hobby_2) }}
+            {% endif %}
+          </strong>
+        </div>
+      </div>
+
+      <div class="button-row">
+        <a href="/my-matches" class="btn btn-primary">Return to my matches</a>
+        <a href="/find-match" class="btn btn-secondary">Find another match</a>
+        <a href="/dashboard" class="btn btn-secondary">Return to dashboard</a>
+      </div>
+    </section>
+  </main>
+
+</body>
+</html>

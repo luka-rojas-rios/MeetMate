@@ -1,643 +1,742 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
-from backend.database import SessionLocal
+from backend.database import get_db
 from backend.models.match import Match
 from backend.models.user import User
-from backend.profile_options import (
-    HOBBIES,
-    LANGUAGES,
-    SPORTS,
-    UNIVERSITY_DATA,
-    USER_TYPES,
-    find_university_location,
-)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
 
-MIN_COMPATIBILITY_SCORE = 50
-MAX_SUGGESTIONS = 3
-MATCH_ACTIVE_STATUSES = {"pending", "accepted"}
+
+SPANISH_REASON_TRANSLATIONS = {
+    "Tenéis perfiles complementarios.": "You have complementary profiles.",
+    "Compartís idioma o idiomas.": "You share one or more languages.",
+    "Tu universidad de origen coincide con su universidad actual.": "Your home university matches their current university.",
+    "Tu universidad actual coincide con su universidad de origen.": "Your current university matches their home university.",
+    "Compartís algún deporte favorito.": "You share at least one favorite sport.",
+    "Tenéis hobbies en común.": "You have hobbies in common.",
+    "Ambos tenéis el perfil de matching completo.": "Both users have completed their matching profile.",
+}
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+def get_current_user(request: Request, db: Session):
+    user_id = request.session.get("user_id")
 
-
-def get_logged_user(request: Request, db: Session):
-    username = request.session.get("username")
-    if not username:
+    if not user_id:
         return None
-    return db.query(User).filter_by(username=username).first()
+
+    return db.query(User).filter(User.id == user_id).first()
 
 
-def get_profile_values(user: User):
-    languages = {value for value in [user.language, user.language_2] if value}
-    hobbies = {value for value in [user.hobby_1, user.hobby_2] if value}
-    sports = {value for value in [user.favorite_sport_1, user.favorite_sport_2] if value}
-    university = user.exchange_university or user.home_university
-    return languages, hobbies, sports, university
+def clean(value):
+    if not value:
+        return ""
+
+    return str(value).strip().lower()
 
 
-def is_profile_complete(user: User):
-    languages, hobbies, sports, university = get_profile_values(user)
-    required = [user.user_type, user.language, university]
-    return all(required) and bool(hobbies) and bool(sports) and len(languages) >= 1
+def translate_match_reason_text(reason_text):
+    if not reason_text:
+        return reason_text
+
+    translated_text = reason_text
+
+    for spanish_text, english_text in SPANISH_REASON_TRANSLATIONS.items():
+        translated_text = translated_text.replace(spanish_text, english_text)
+
+    return translated_text
 
 
-def get_profile_completion_bonus(user: User):
-    fields = [
-        user.first_name,
-        user.last_name,
-        user.birth_date,
-        user.sex,
-        user.nationality,
-        user.phone,
-        user.user_type,
-        user.language,
-        user.language_2,
-        user.favorite_sport_1,
-        user.favorite_sport_2,
-        user.hobby_1,
-        user.hobby_2,
-        user.home_university or user.exchange_university,
-    ]
-    filled_fields = sum(1 for value in fields if value)
+def prepare_match_for_display(match: Match):
+    if match and match.match_reason:
+        match.match_reason = translate_match_reason_text(match.match_reason)
 
-    if filled_fields >= 12:
-        return 10
-    if filled_fields >= 9:
-        return 5
-    return 0
+    return match
 
 
-def get_opposite_user_type(user_type: str):
-    if user_type == "exchange":
-        return "local"
-    if user_type == "local":
-        return "exchange"
-    return None
+def get_selected_language(language_value: str | None, other_language_value: str | None):
+    if language_value == "Other":
+        return other_language_value.strip() if other_language_value else "Other"
+
+    return language_value
 
 
-def build_match_context(match: Match, user: User):
-    other_user = match.buddy if match.student_id == user.id else match.student
-    reasons = [reason for reason in (match.match_reason or "").split("|") if reason]
-
-    return {
-        "current_match": match,
-        "current_match_user": other_user,
-        "current_match_reasons": reasons,
-        "current_match_status": match.status,
-        "current_match_score": match.compatibility_score,
-    }
-
-
-def get_user_current_match(user: User, db: Session):
-    return (
-        db.query(Match)
-        .filter(
-            or_(Match.student_id == user.id, Match.buddy_id == user.id),
-            Match.status.in_(tuple(MATCH_ACTIVE_STATUSES)),
-        )
-        .order_by(Match.id.desc())
-        .first()
+def has_match_profile(user: User):
+    return bool(
+        user
+        and clean(user.user_type)
+        and clean(user.language)
+        and clean(user.home_university)
+        and clean(user.exchange_university)
     )
 
 
-def has_existing_pair(user_id: int, candidate_id: int, db: Session):
+def users_are_in_same_destination_university(user_a: User, user_b: User):
+    return bool(
+        user_a
+        and user_b
+        and clean(user_a.exchange_university)
+        and clean(user_b.exchange_university)
+        and clean(user_a.exchange_university) == clean(user_b.exchange_university)
+    )
+
+
+def get_other_user(match: Match, current_user: User):
+    if match.student_id == current_user.id:
+        return match.buddy
+
+    return match.student
+
+
+def get_existing_match_between_users(db: Session, user_a_id: int, user_b_id: int):
     return (
         db.query(Match)
         .filter(
             or_(
-                and_(Match.student_id == user_id, Match.buddy_id == candidate_id),
-                and_(Match.student_id == candidate_id, Match.buddy_id == user_id),
+                and_(
+                    Match.student_id == user_a_id,
+                    Match.buddy_id == user_b_id,
+                ),
+                and_(
+                    Match.student_id == user_b_id,
+                    Match.buddy_id == user_a_id,
+                ),
             )
         )
         .first()
-        is not None
     )
 
 
-def score_candidate(user: User, candidate: User):
-    user_languages, user_hobbies, user_sports, user_university = get_profile_values(user)
-    candidate_languages, candidate_hobbies, candidate_sports, candidate_university = get_profile_values(candidate)
+def get_accepted_matches_for_user(db: Session, user_id: int):
+    return (
+        db.query(Match)
+        .filter(
+            Match.status == "accepted",
+            or_(
+                Match.student_id == user_id,
+                Match.buddy_id == user_id,
+            ),
+        )
+        .order_by(Match.id.asc())
+        .all()
+    )
 
-    if not user_university or not candidate_university:
+
+def get_accepted_match_for_user(db: Session, user_id: int, exclude_match_id: int | None = None):
+    query = (
+        db.query(Match)
+        .filter(
+            Match.status == "accepted",
+            or_(
+                Match.student_id == user_id,
+                Match.buddy_id == user_id,
+            ),
+        )
+    )
+
+    if exclude_match_id:
+        query = query.filter(Match.id != exclude_match_id)
+
+    return query.order_by(Match.id.asc()).first()
+
+
+def enforce_match_rules_for_user(db: Session, user: User):
+    if not user:
         return None
 
-    # MISMA UNIVERSIDAD OBLIGATORIA
-    if candidate_university != user_university:
-        return None
+    accepted_matches = get_accepted_matches_for_user(db, user.id)
+    valid_matches = []
+    changed = False
+    now = datetime.now().isoformat()
 
-    shared_languages = sorted(user_languages & candidate_languages)
-    shared_hobbies = sorted(user_hobbies & candidate_hobbies)
-    shared_sports = sorted(user_sports & candidate_sports)
+    for match in accepted_matches:
+        other_user = get_other_user(match, user)
 
-    score = 40
-    reasons = [f"Same university: {user_university} (+40)"]
+        if not other_user:
+            match.status = "rejected"
+            match.responded_at = now
+            changed = True
+            continue
 
-    if shared_languages:
-        language_points = len(shared_languages) * 20
-        score += language_points
-        reasons.append(f"Shared languages: {', '.join(shared_languages)} (+{language_points})")
+        if not users_are_in_same_destination_university(user, other_user):
+            match.status = "rejected"
+            match.responded_at = now
+            changed = True
+            continue
 
-    if shared_hobbies:
-        hobby_points = len(shared_hobbies) * 10
-        score += hobby_points
-        reasons.append(f"Shared hobbies: {', '.join(shared_hobbies)} (+{hobby_points})")
+        valid_matches.append(match)
 
-    if shared_sports:
-        sports_points = len(shared_sports) * 8
-        score += sports_points
-        reasons.append(f"Shared sports: {', '.join(shared_sports)} (+{sports_points})")
+    if len(valid_matches) > 1:
+        match_to_keep = valid_matches[0]
 
-    completion_bonus = get_profile_completion_bonus(candidate)
-    if completion_bonus:
-        score += completion_bonus
-        reasons.append(f"Complete profile bonus (+{completion_bonus})")
+        for match in valid_matches[1:]:
+            match.status = "rejected"
+            match.responded_at = now
+            changed = True
 
-    return {
-        "candidate": candidate,
-        "score": score,
-        "reasons": reasons,
+        if changed:
+            db.commit()
+            db.refresh(match_to_keep)
+
+        return match_to_keep
+
+    if changed:
+        db.commit()
+
+    if valid_matches:
+        return valid_matches[0]
+
+    return None
+
+
+def calculate_match_score(current_user: User, candidate: User):
+    score = 0
+    reasons = []
+
+    if users_are_in_same_destination_university(current_user, candidate):
+        score += 4
+        reasons.append("You are currently at the same destination university.")
+
+    if clean(current_user.user_type) and clean(candidate.user_type):
+        if clean(current_user.user_type) != clean(candidate.user_type):
+            score += 3
+            reasons.append("You have complementary profiles.")
+
+    current_languages = {
+        clean(current_user.language),
+        clean(current_user.language_2),
     }
 
+    candidate_languages = {
+        clean(candidate.language),
+        clean(candidate.language_2),
+    }
 
-def find_best_matches(user: User, db: Session, limit: int = MAX_SUGGESTIONS):
-    if user.user_type not in USER_TYPES:
-        return [], "Choose whether you are a local or exchange student first."
+    current_languages.discard("")
+    candidate_languages.discard("")
 
-    if not is_profile_complete(user):
-        return [], "Complete your profile with university, languages, hobbies and sports before requesting a match."
+    if current_languages.intersection(candidate_languages):
+        score += 3
+        reasons.append("You share one or more languages.")
 
-    _, _, _, user_university = get_profile_values(user)
-    target_user_type = get_opposite_user_type(user.user_type)
+    if clean(current_user.home_university) and clean(candidate.exchange_university):
+        if clean(current_user.home_university) == clean(candidate.exchange_university):
+            score += 2
+            reasons.append("Your home university matches their current university.")
 
-    if not target_user_type:
-        return [], "Invalid student type."
+    if clean(current_user.exchange_university) and clean(candidate.home_university):
+        if clean(current_user.exchange_university) == clean(candidate.home_university):
+            score += 2
+            reasons.append("Your current university matches their home university.")
 
-    candidates = (
-        db.query(User)
+    current_sports = {
+        clean(current_user.favorite_sport_1),
+        clean(current_user.favorite_sport_2),
+    }
+
+    candidate_sports = {
+        clean(candidate.favorite_sport_1),
+        clean(candidate.favorite_sport_2),
+    }
+
+    current_sports.discard("")
+    candidate_sports.discard("")
+
+    if current_sports.intersection(candidate_sports):
+        score += 1
+        reasons.append("You share at least one favorite sport.")
+
+    current_hobbies = {
+        clean(current_user.hobby_1),
+        clean(current_user.hobby_2),
+    }
+
+    candidate_hobbies = {
+        clean(candidate.hobby_1),
+        clean(candidate.hobby_2),
+    }
+
+    current_hobbies.discard("")
+    candidate_hobbies.discard("")
+
+    if current_hobbies.intersection(candidate_hobbies):
+        score += 1
+        reasons.append("You have hobbies in common.")
+
+    if score == 0:
+        score = 1
+        reasons.append("Both users have completed their matching profile.")
+
+    return score, reasons
+
+
+def create_pending_match(db: Session, current_user: User, candidate: User, score: int, reasons: list[str]):
+    if not users_are_in_same_destination_university(current_user, candidate):
+        return None
+
+    if get_accepted_match_for_user(db, current_user.id):
+        return None
+
+    if get_accepted_match_for_user(db, candidate.id):
+        return None
+
+    existing_match = get_existing_match_between_users(db, current_user.id, candidate.id)
+
+    if existing_match:
+        return prepare_match_for_display(existing_match)
+
+    reason_text = "\n".join(reasons)
+
+    new_match = Match(
+        student_id=current_user.id,
+        buddy_id=candidate.id,
+        requested_by=current_user.id,
+        status="pending",
+        compatibility_score=score,
+        match_reason=reason_text,
+        created_at=datetime.now().isoformat(),
+        responded_at=None,
+    )
+
+    db.add(new_match)
+    db.commit()
+    db.refresh(new_match)
+
+    return new_match
+
+
+def reject_other_pending_matches_after_accept(db: Session, accepted_match: Match):
+    now = datetime.now().isoformat()
+    involved_user_ids = [
+        accepted_match.student_id,
+        accepted_match.buddy_id,
+    ]
+
+    other_pending_matches = (
+        db.query(Match)
         .filter(
-            User.id != user.id,
-            User.user_type == target_user_type,
+            Match.id != accepted_match.id,
+            Match.status == "pending",
             or_(
-                User.home_university == user_university,
-                User.exchange_university == user_university,
+                Match.student_id.in_(involved_user_ids),
+                Match.buddy_id.in_(involved_user_ids),
             ),
         )
         .all()
     )
 
-    ranked_candidates = []
+    for item in other_pending_matches:
+        item.status = "rejected"
+        item.responded_at = now
+
+    db.commit()
+
+
+def get_best_candidate(db: Session, current_user: User):
+    candidates = db.query(User).filter(User.id != current_user.id).all()
+
+    best_candidate = None
+    best_score = -1
+    best_reasons = []
 
     for candidate in candidates:
-        if not is_profile_complete(candidate):
+        if not has_match_profile(candidate):
             continue
 
-        # Evita repetir parejas antiguas
-        if has_existing_pair(user.id, candidate.id, db):
+        if not users_are_in_same_destination_university(current_user, candidate):
             continue
 
-        result = score_candidate(user, candidate)
-        if not result:
+        if get_accepted_match_for_user(db, candidate.id):
             continue
 
-        if result["score"] < MIN_COMPATIBILITY_SCORE:
+        existing_match = get_existing_match_between_users(db, current_user.id, candidate.id)
+
+        if existing_match:
             continue
 
-        ranked_candidates.append(result)
+        score, reasons = calculate_match_score(current_user, candidate)
 
-    ranked_candidates.sort(key=lambda item: item["score"], reverse=True)
+        if score > best_score:
+            best_candidate = candidate
+            best_score = score
+            best_reasons = reasons
 
-    if not ranked_candidates:
-        return [], "We have not found a sufficiently compatible match in your university yet."
-
-    return ranked_candidates[:limit], None
+    return best_candidate, best_score, best_reasons
 
 
-def create_match_record(user: User, candidate_result: dict, db: Session):
-    matched_user = candidate_result["candidate"]
+@router.get("/match-profile")
+def match_profile_page(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
 
-    # student_id = exchange / buddy_id = local
-    if user.user_type == "exchange":
-        student_id = user.id
-        buddy_id = matched_user.id
-    else:
-        student_id = matched_user.id
-        buddy_id = user.id
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
 
-    existing = (
-        db.query(Match)
-        .filter(
-            or_(
-                and_(Match.student_id == student_id, Match.buddy_id == buddy_id),
-                and_(Match.student_id == buddy_id, Match.buddy_id == student_id),
-            )
-        )
-        .first()
+    return templates.TemplateResponse(
+        request=request,
+        name="match_profile.html",
+        context={
+            "user": user,
+            "error": None,
+            "success": None,
+        },
     )
-    if existing:
-        return existing
-
-    match = Match(
-        student_id=student_id,
-        buddy_id=buddy_id,
-        requested_by=user.id,
-        created_at=datetime.utcnow().isoformat(),
-        status="pending",
-        compatibility_score=candidate_result["score"],
-        match_reason="|".join(candidate_result["reasons"]),
-    )
-    db.add(match)
-    db.commit()
-    db.refresh(match)
-    return match
 
 
-def render_profile_form(request: Request, user: User | None = None, db: Session | None = None, **extra_context):
-    selected_university = None
-    country = None
-    city = None
-
-    if user:
-        selected_university = user.exchange_university or user.home_university
-        country, city = find_university_location(selected_university)
-
-    context = {
-        "request": request,
-        "user": user,
-        "selected_country": country,
-        "selected_city": city,
-        "selected_university": selected_university,
-        "university_data": UNIVERSITY_DATA,
-        "languages": LANGUAGES,
-        "hobbies": HOBBIES,
-        "sports": SPORTS,
-        **extra_context,
-    }
-
-    if user and db:
-        current_match = get_user_current_match(user, db)
-        if current_match:
-            context.update(build_match_context(current_match, user))
-
-    return templates.TemplateResponse(request=request, name="match_profile.html", context=context)
-
-
-def validate_profile_data(
-    user_type: str,
-    language: str,
-    language2: str | None,
-    country: str,
-    city: str,
-    selected_university: str,
-    favorite_sport_1: str | None,
-    favorite_sport_2: str | None,
-    hobby_1: str | None,
-    hobby_2: str | None,
-):
-    if user_type not in USER_TYPES:
-        return "Invalid student type."
-    if language not in LANGUAGES:
-        return "Language 1 is invalid."
-    if language2 and language2 not in LANGUAGES:
-        return "Language 2 is invalid."
-    if language2 and language2 == language:
-        return "Please choose two different languages or leave Language 2 empty."
-    if hobby_1 and hobby_1 not in HOBBIES:
-        return "Hobby 1 is invalid."
-    if hobby_2 and hobby_2 not in HOBBIES:
-        return "Hobby 2 is invalid."
-    if hobby_1 and hobby_2 and hobby_1 == hobby_2:
-        return "Please choose two different hobbies or leave Hobby 2 empty."
-    if favorite_sport_1 and favorite_sport_1 not in SPORTS:
-        return "First favorite sport is invalid."
-    if favorite_sport_2 and favorite_sport_2 not in SPORTS:
-        return "Second favorite sport is invalid."
-    if favorite_sport_1 and favorite_sport_2 and favorite_sport_1 == favorite_sport_2:
-        return "Please choose two different sports or leave the second one empty."
-    if country not in UNIVERSITY_DATA:
-        return "Selected country is invalid."
-    if city not in UNIVERSITY_DATA[country]:
-        return "Selected city is invalid."
-    if selected_university not in UNIVERSITY_DATA[country][city]:
-        return "Selected university is invalid."
-    return None
-
-
-@router.post("/submit_match_profile", response_class=HTMLResponse)
-def submit_match_profile(
+@router.post("/match-profile")
+def save_match_profile(
     request: Request,
     user_type: str = Form(...),
     language: str = Form(...),
-    language2: str = Form(""),
-    country: str = Form(...),
-    city: str = Form(...),
-    university: str = Form(...),
-    favorite_sport_1: str = Form(""),
-    favorite_sport_2: str = Form(""),
-    hobby_1: str = Form(""),
-    hobby_2: str = Form(""),
+    language_other: str = Form(None),
+    language_2: str = Form(None),
+    language_2_other: str = Form(None),
+    home_university: str = Form(...),
+    exchange_university: str = Form(...),
+    favorite_sport_1: str = Form(None),
+    favorite_sport_2: str = Form(None),
+    hobby_1: str = Form(None),
+    hobby_2: str = Form(None),
+    action: str = Form("save"),
     db: Session = Depends(get_db),
 ):
-    user = get_logged_user(request, db)
+    user = get_current_user(request, db)
+
     if not user:
-        return render_profile_form(request, error="Sign in to edit your profile.")
+        return RedirectResponse(url="/login", status_code=303)
 
-    validation_error = validate_profile_data(
-        user_type=user_type,
-        language=language,
-        language2=language2,
-        country=country,
-        city=city,
-        selected_university=university,
-        favorite_sport_1=favorite_sport_1,
-        favorite_sport_2=favorite_sport_2,
-        hobby_1=hobby_1,
-        hobby_2=hobby_2,
-    )
-
-    if validation_error:
-        temp_user = User(
-            username=user.username,
-            user_type=user_type,
-            language=language,
-            language_2=language2,
-            home_university=university if user_type == "local" else "",
-            exchange_university=university if user_type == "exchange" else "",
-            favorite_sport_1=favorite_sport_1,
-            favorite_sport_2=favorite_sport_2,
-            hobby_1=hobby_1,
-            hobby_2=hobby_2,
-        )
-        return render_profile_form(
-            request,
-            user=temp_user,
-            db=db,
-            error=validation_error,
-        )
+    selected_language = get_selected_language(language, language_other)
+    selected_language_2 = get_selected_language(language_2, language_2_other)
 
     user.user_type = user_type
-    user.language = language
-    user.language_2 = language2 or None
-    user.home_university = university if user_type == "local" else None
-    user.exchange_university = university if user_type == "exchange" else None
-    user.favorite_sport_1 = favorite_sport_1 or None
-    user.favorite_sport_2 = favorite_sport_2 or None
-    user.hobby_1 = hobby_1 or None
-    user.hobby_2 = hobby_2 or None
+    user.language = selected_language
+    user.language_2 = selected_language_2
+    user.home_university = home_university
+    user.exchange_university = exchange_university
+    user.favorite_sport_1 = favorite_sport_1
+    user.favorite_sport_2 = favorite_sport_2
+    user.hobby_1 = hobby_1
+    user.hobby_2 = hobby_2
+
     db.commit()
     db.refresh(user)
 
-    current_match = get_user_current_match(user, db)
-    if current_match:
-        return render_profile_form(
-            request,
-            user=user,
-            db=db,
-            message=f"Profile updated successfully. You already have a {current_match.status} match.",
-        )
-
-    ranked_candidates, error_message = find_best_matches(user, db)
-
-    if not ranked_candidates:
-        return render_profile_form(
-            request,
-            user=user,
-            db=db,
-            message=f"Profile updated successfully. {error_message}",
-        )
-
-    best_candidate = ranked_candidates[0]
-    current_match = create_match_record(user, best_candidate, db)
-    match_context = build_match_context(current_match, user)
-
-    alternative_matches = []
-    for candidate_result in ranked_candidates[1:]:
-        alternative_matches.append(
-            {
-                "username": candidate_result["candidate"].username,
-                "score": candidate_result["score"],
-            }
-        )
+    if action == "find_match":
+        return RedirectResponse(url="/find-match", status_code=303)
 
     return templates.TemplateResponse(
         request=request,
-        name="match_success.html",
+        name="match_profile.html",
         context={
-            "request": request,
-            "matched_user": match_context["current_match_user"],
-            "message": "Profile updated successfully. We found a compatible student from your university.",
-            "match_status": match_context["current_match_status"],
-            "match_score": match_context["current_match_score"],
-            "match_reasons": match_context["current_match_reasons"],
-            "current_match": current_match,
-            "alternative_matches": alternative_matches,
+            "user": user,
+            "error": None,
+            "success": "Matching profile saved successfully.",
         },
     )
 
 
-@router.get("/match-profile", response_class=HTMLResponse)
-def match_profile(request: Request, db: Session = Depends(get_db)):
-    user = get_logged_user(request, db)
+@router.get("/find-match")
+def find_match(request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
     if not user:
-        return render_profile_form(request, error="Sign in")
+        return RedirectResponse(url="/login", status_code=303)
 
-    return render_profile_form(
-        request,
-        user=user,
-        db=db,
-        message="Complete or update your profile to improve your matching results.",
-    )
+    accepted_match = enforce_match_rules_for_user(db, user)
 
-
-def get_match_for_logged_user(match_id: int, request: Request, db: Session):
-    user = get_logged_user(request, db)
-    if not user:
-        return None, None
-
-    match = (
-        db.query(Match)
-        .filter(
-            Match.id == match_id,
-            or_(Match.student_id == user.id, Match.buddy_id == user.id),
-        )
-        .first()
-    )
-    return user, match
-
-
-@router.post("/matches/{match_id}/accept", response_class=HTMLResponse)
-def accept_match(match_id: int, request: Request, db: Session = Depends(get_db)):
-    user, match = get_match_for_logged_user(match_id, request, db)
-    if not user or not match:
-        return RedirectResponse(url="/match-profile", status_code=302)
-
-    if match.status != "pending":
-        return render_profile_form(request, user=user, db=db, message=f"This match is already {match.status}.")
-
-    match.status = "accepted"
-    match.responded_at = datetime.utcnow().isoformat()
-    db.commit()
-    db.refresh(match)
-
-    match_context = build_match_context(match, user)
-    return templates.TemplateResponse(
-        request=request,
-        name="match_success.html",
-        context={
-            "request": request,
-            "matched_user": match_context["current_match_user"],
-            "message": "You accepted the match.",
-            "match_status": match_context["current_match_status"],
-            "match_score": match_context["current_match_score"],
-            "match_reasons": match_context["current_match_reasons"],
-            "current_match": match,
-            "alternative_matches": [],
-        },
-    )
-
-
-@router.post("/matches/{match_id}/reject", response_class=HTMLResponse)
-def reject_match(match_id: int, request: Request, db: Session = Depends(get_db)):
-    user, match = get_match_for_logged_user(match_id, request, db)
-    if not user or not match:
-        return RedirectResponse(url="/match-profile", status_code=302)
-
-    if match.status != "pending":
-        return render_profile_form(request, user=user, db=db, message=f"This match is already {match.status}.")
-
-    match.status = "rejected"
-    match.responded_at = datetime.utcnow().isoformat()
-    db.commit()
-
-    ranked_candidates, error_message = find_best_matches(user, db)
-    if ranked_candidates:
-        new_match = create_match_record(user, ranked_candidates[0], db)
-        new_match_context = build_match_context(new_match, user)
+    if accepted_match:
+        accepted_user = get_other_user(accepted_match, user)
 
         return templates.TemplateResponse(
             request=request,
             name="match_success.html",
             context={
-                "request": request,
-                "matched_user": new_match_context["current_match_user"],
-                "message": "Previous match rejected. We found a new compatible student.",
-                "match_status": new_match_context["current_match_status"],
-                "match_score": new_match_context["current_match_score"],
-                "match_reasons": new_match_context["current_match_reasons"],
-                "current_match": new_match,
-                "alternative_matches": [],
+                "user": user,
+                "match_request": prepare_match_for_display(accepted_match),
+                "match_user": accepted_user,
+                "status_title": "You already have an accepted match",
+                "status_message": "Only one accepted match is allowed. Once you have an accepted match, you cannot search for another one.",
+                "reasons": [],
+                "needs_profile": False,
             },
         )
 
-    return render_profile_form(
-        request,
-        user=user,
+    if not has_match_profile(user):
+        return templates.TemplateResponse(
+            request=request,
+            name="match_success.html",
+            context={
+                "user": user,
+                "match_request": None,
+                "match_user": None,
+                "status_title": "Incomplete matching profile",
+                "status_message": "Before searching for a match, you need to complete and save your matching profile.",
+                "reasons": [],
+                "needs_profile": True,
+            },
+        )
+
+    candidate, score, reasons = get_best_candidate(db, user)
+
+    if not candidate:
+        return templates.TemplateResponse(
+            request=request,
+            name="match_success.html",
+            context={
+                "user": user,
+                "match_request": None,
+                "match_user": None,
+                "status_title": "No new matches available",
+                "status_message": "No available users from your destination university were found. They may already be matched, or there may already be a previous request.",
+                "reasons": [],
+                "needs_profile": False,
+            },
+        )
+
+    match_request = create_pending_match(
         db=db,
-        message=f"Match rejected. {error_message}",
+        current_user=user,
+        candidate=candidate,
+        score=score,
+        reasons=reasons,
     )
 
-
-@router.post("/matches/{match_id}/cancel", response_class=HTMLResponse)
-def cancel_match(match_id: int, request: Request, db: Session = Depends(get_db)):
-    user, match = get_match_for_logged_user(match_id, request, db)
-    if not user or not match:
-        return RedirectResponse(url="/match-profile", status_code=302)
-
-    if match.status != "accepted":
-        return render_profile_form(request, user=user, db=db, message="Only accepted matches can be cancelled.")
-
-    match.status = "cancelled"
-    match.responded_at = datetime.utcnow().isoformat()
-    db.commit()
-
-    return render_profile_form(
-        request,
-        user=user,
-        db=db,
-        message="Match cancelled successfully.",
-    )
-
-
-@router.post("/matches/{match_id}/complete", response_class=HTMLResponse)
-def complete_match(match_id: int, request: Request, db: Session = Depends(get_db)):
-    user, match = get_match_for_logged_user(match_id, request, db)
-    if not user or not match:
-        return RedirectResponse(url="/match-profile", status_code=302)
-
-    if match.status != "accepted":
-        return render_profile_form(request, user=user, db=db, message="Only accepted matches can be marked as completed.")
-
-    match.status = "completed"
-    match.responded_at = datetime.utcnow().isoformat()
-    db.commit()
-
-    return render_profile_form(
-        request,
-        user=user,
-        db=db,
-        message="Match marked as completed.",
-    )
-
-
-@router.get("/edit-profile", response_class=HTMLResponse)
-def edit_profile(request: Request, db: Session = Depends(get_db)):
-    user = get_logged_user(request, db)
-    if not user:
-        return RedirectResponse(url="/", status_code=302)
+    if not match_request:
+        return templates.TemplateResponse(
+            request=request,
+            name="match_success.html",
+            context={
+                "user": user,
+                "match_request": None,
+                "match_user": None,
+                "status_title": "No new matches available",
+                "status_message": "No available users from your destination university were found.",
+                "reasons": [],
+                "needs_profile": False,
+            },
+        )
 
     return templates.TemplateResponse(
         request=request,
-        name="edit_profile.html",
+        name="match_success.html",
         context={
             "user": user,
-            "message": None
-        }
+            "match_request": prepare_match_for_display(match_request),
+            "match_user": candidate,
+            "status_title": "Match request sent",
+            "status_message": "Your request will remain pending until the other person accepts or rejects it.",
+            "reasons": reasons,
+            "needs_profile": False,
+        },
     )
 
 
-@router.post("/edit-profile", response_class=HTMLResponse)
-def save_profile(
+@router.get("/my-matches")
+def my_matches(
     request: Request,
-    first_name: str = Form(""),
-    last_name: str = Form(""),
-    birth_date: str = Form(""),
-    sex: str = Form(""),
-    nationality: str = Form(""),
-    phone: str = Form(""),
-    db: Session = Depends(get_db)
+    error: str = None,
+    success: str = None,
+    db: Session = Depends(get_db),
 ):
-    user = get_logged_user(request, db)
+    user = get_current_user(request, db)
+
     if not user:
-        return RedirectResponse(url="/", status_code=302)
+        return RedirectResponse(url="/login", status_code=303)
 
-    user.first_name = first_name
-    user.last_name = last_name
-    user.birth_date = birth_date if birth_date else None
-    user.sex = sex
-    user.nationality = nationality
-    user.phone = phone
+    enforce_match_rules_for_user(db, user)
 
-    db.commit()
-    db.refresh(user)
+    matches = (
+        db.query(Match)
+        .filter(
+            or_(
+                Match.student_id == user.id,
+                Match.buddy_id == user.id,
+            )
+        )
+        .order_by(Match.id.desc())
+        .all()
+    )
+
+    pending_received = []
+    pending_sent = []
+    accepted_matches = []
+    rejected_matches = []
+
+    for match in matches:
+        prepare_match_for_display(match)
+        other_user = get_other_user(match, user)
+
+        if not other_user:
+            continue
+
+        item = {
+            "match": match,
+            "other_user": other_user,
+        }
+
+        if match.status == "pending" and match.requested_by != user.id:
+            pending_received.append(item)
+        elif match.status == "pending" and match.requested_by == user.id:
+            pending_sent.append(item)
+        elif match.status == "accepted":
+            accepted_matches.append(item)
+        elif match.status == "rejected":
+            rejected_matches.append(item)
 
     return templates.TemplateResponse(
         request=request,
-        name="edit_profile.html",
+        name="my_matches.html",
         context={
             "user": user,
-            "message": "Personal profile updated successfully."
-        }
+            "pending_received": pending_received,
+            "pending_sent": pending_sent,
+            "accepted_matches": accepted_matches,
+            "rejected_matches": rejected_matches,
+            "error": error,
+            "success": success,
+        },
+    )
+
+
+@router.post("/matches/{match_id}/accept")
+def accept_match(match_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    enforce_match_rules_for_user(db, user)
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.id == match_id,
+            or_(
+                Match.student_id == user.id,
+                Match.buddy_id == user.id,
+            ),
+        )
+        .first()
+    )
+
+    if not match:
+        return RedirectResponse(url="/my-matches?error=The request does not exist.", status_code=303)
+
+    if match.status != "pending":
+        return RedirectResponse(url="/my-matches?error=This request is no longer pending.", status_code=303)
+
+    if match.requested_by == user.id:
+        return RedirectResponse(url="/my-matches?error=You cannot accept a request that you sent.", status_code=303)
+
+    other_user = get_other_user(match, user)
+
+    if not other_user:
+        return RedirectResponse(url="/my-matches?error=The other user does not exist.", status_code=303)
+
+    enforce_match_rules_for_user(db, other_user)
+
+    if not users_are_in_same_destination_university(user, other_user):
+        return RedirectResponse(
+            url="/my-matches?error=You can only accept matches with users from your destination university.",
+            status_code=303,
+        )
+
+    if get_accepted_match_for_user(db, user.id, exclude_match_id=match.id):
+        return RedirectResponse(
+            url="/my-matches?error=You already have an accepted match. You cannot accept another one.",
+            status_code=303,
+        )
+
+    if get_accepted_match_for_user(db, other_user.id, exclude_match_id=match.id):
+        return RedirectResponse(
+            url="/my-matches?error=The other person already has an accepted match.",
+            status_code=303,
+        )
+
+    match.status = "accepted"
+    match.responded_at = datetime.now().isoformat()
+
+    db.commit()
+    db.refresh(match)
+
+    reject_other_pending_matches_after_accept(db, match)
+
+    return RedirectResponse(url="/my-matches?success=Match accepted successfully.", status_code=303)
+
+
+@router.post("/matches/{match_id}/reject")
+def reject_match(match_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.id == match_id,
+            or_(
+                Match.student_id == user.id,
+                Match.buddy_id == user.id,
+            ),
+        )
+        .first()
+    )
+
+    if not match:
+        return RedirectResponse(url="/my-matches?error=The request does not exist.", status_code=303)
+
+    if match.requested_by == user.id:
+        return RedirectResponse(url="/my-matches?error=You cannot reject a request that you sent.", status_code=303)
+
+    match.status = "rejected"
+    match.responded_at = datetime.now().isoformat()
+
+    db.commit()
+
+    return RedirectResponse(url="/my-matches?success=Request rejected.", status_code=303)
+
+
+@router.get("/matches/{match_id}")
+def matched_profile(match_id: int, request: Request, db: Session = Depends(get_db)):
+    user = get_current_user(request, db)
+
+    if not user:
+        return RedirectResponse(url="/login", status_code=303)
+
+    enforce_match_rules_for_user(db, user)
+
+    match = (
+        db.query(Match)
+        .filter(
+            Match.id == match_id,
+            or_(
+                Match.student_id == user.id,
+                Match.buddy_id == user.id,
+            ),
+        )
+        .first()
+    )
+
+    if not match:
+        return RedirectResponse(url="/my-matches", status_code=303)
+
+    matched_user = get_other_user(match, user)
+
+    if not matched_user:
+        return RedirectResponse(url="/my-matches", status_code=303)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="matched_profile.html",
+        context={
+            "user": user,
+            "matched_user": matched_user,
+            "match": prepare_match_for_display(match),
+        },
     )

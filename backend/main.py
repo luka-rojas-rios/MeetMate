@@ -12,14 +12,21 @@ from backend.routes import feedback_routes
 
 from backend.models.base import Base
 from backend.database import engine
+
+# Importamos modelos para que SQLAlchemy detecte todas las tablas
 from backend.models.user import User
 from backend.models.match import Match
 from backend.models.event import Event
 from backend.models.event_participant import EventParticipant
 from backend.models.feedback import Feedback
+from backend.models.event_review import EventReview
 
-app = FastAPI()
+from backend.schema_upgrades import run_schema_upgrades
+
+
+app = FastAPI(title="MeetMate")
 templates = Jinja2Templates(directory="frontend/templates")
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -29,15 +36,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 app.mount("/static", StaticFiles(directory="frontend/static"), name="static")
-app.add_middleware(SessionMiddleware, secret_key="clave-super-secreta")
+
+
+app.add_middleware(
+    SessionMiddleware,
+    secret_key="clave-super-secreta"
+)
+
 
 app.include_router(auth_routes.router)
 app.include_router(match_routes.router)
 app.include_router(event_routes.router)
 app.include_router(feedback_routes.router)
 
+
 Base.metadata.create_all(bind=engine)
+run_schema_upgrades()
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -61,6 +77,7 @@ def get_welcome(request: Request):
 @app.get("/dashboard", response_class=HTMLResponse)
 def dashboard(request: Request):
     username = request.session.get("username")
+
     if not username:
         return templates.TemplateResponse(
             request=request,

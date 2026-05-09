@@ -3,229 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MEET-MATE</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <link rel="stylesheet" href="/static/style.css?v=4">
-
-  <style>
-
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      color: white;
-    }
-
-    .logo {
-      max-width: 200px;
-      max-height: 120px;
-      width: auto; height: auto;
-      object-fit: contain;
-      margin: 0 auto 15px auto;
-      border-radius: 15px;
-      display: block;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    h1 { font-size: 2.2em; margin: 0 0 20px 0; text-align: center; font-weight: 600; letter-spacing: 1px; }
-
-    .login-container {
-      background-color: rgba(255, 255, 255, 0.98);
-      color: #333;
-      padding: 40px 30px;
-      border-radius: 24px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
-      width: 90%;
-      max-width: 400px;
-      text-align: center;
-      box-sizing: border-box;
-      backdrop-filter: blur(10px);
-    }
-
-    button {
-      background: linear-gradient(135deg, #4b6a7e, #36546a);
-      color: white; padding: 15px; border: none; border-radius: 12px;
-      width: 100%; font-size: 1.1em; font-weight: 600; cursor: pointer;
-      margin-top: 10px; margin-bottom: 20px;
-      font-family: 'Poppins', sans-serif;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-    button:hover { transform: translateY(-2px); box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15); }
-
-    a { color: #2a5298; text-decoration: none; font-size: 0.9em; font-weight: 500; }
-    a:hover { text-decoration: underline; }
-    .login-container p { margin: 10px 0; }
-
-    label {
-      display: block;
-      text-align: left;
-      margin-bottom: 8px;
-      font-weight: 600;
-      font-size: 0.95em;
-      color: #4a5568; 
-    }
-
-    input[type="text"],
-    input[type="password"],
-    select {
-      width: 100% !important;
-      padding: 14px 16px !important;
-      margin-bottom: 22px !important;
-      
-      background-color: #e2e8f0 !important; 
-      
-      color: #333333 !important; 
-      
-      border: 1px solid transparent !important;
-      border-radius: 12px !important;
-      font-size: 1em !important;
-      font-family: 'Poppins', sans-serif !important;
-      box-sizing: border-box !important;
-      transition: all 0.3s ease !important;
-    }
-
-    input[type="text"]:focus,
-    input[type="password"]:focus,
-    select:focus {
-      outline: none !important;
-      
-      /* Se vuelve blanco puro al hacer clic para resaltar */
-      background-color: #ffffff !important; 
-      
-      border: 1px solid #4b6a7e !important;
-      box-shadow: 0 0 0 3px rgba(75, 106, 126, 0.15) !important;
-    }
-
-    .password-wrapper { position: relative; width: 100%; }
-    .toggle-password {
-      position: absolute;
-      right: 16px;
-      top: 45%; 
-      transform: translateY(-50%);
-      cursor: pointer;
-      color: #666666 !important; 
-      user-select: none;
-      font-size: 1.1em;
-      z-index: 10; 
-    }
-    
-    .rules {
-      list-style: none; padding: 12px; font-size: 0.8em; text-align: left;
-      margin-top: -10px; margin-bottom: 20px;
-      background-color: #f1f5f9; border-radius: 8px; color: #333;
-    }
-    .rules li.valid { color: #28a745; }
-    .rules li.valid::before { content: "✔ "; }
-    .rules li.invalid { color: #dc3545; }
-    .rules li.invalid::before { content: "✖ "; }
-
-  </style>
+  <title>MeetMate</title>
+  <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-  <img src="static/logo.jpeg" alt="Logo de Meet-Mate" class="logo">
+<body class="page page-home">
 
-  <h1>MEET-MATE</h1>
+  <header class="hero hero-campus">
+    <nav class="navbar">
+      <a href="/" class="brand">
+        <img src="/static/logo.jpeg" alt="Logo MeetMate">
+        <span>MeetMate</span>
+      </a>
 
-  <div id="welcome-screen" class="login-container">
-    <button onclick="showLogin()">Log In</button>
-    <button onclick="showRegister()">Register</button>
-  </div>
-
-  <div id="login-container" class="login-container" style="display: none;">
-    <form id="login-form">
-      <label for="username">Username</label>
-      <input type="text" id="username" name="username" required>
-
-      <label for="password">Password</label>
-      <div class="password-wrapper">
-        <input type="password" id="password" name="password" required>
-        <span class="toggle-password" onclick="togglePasswordVisibility('password')">👁️</span>
+      <div class="nav-actions">
+        {% if user %}
+          <a href="/dashboard" class="btn btn-light">My panel</a>
+          <a href="/logout" class="btn btn-outline-light">Log out</a>
+        {% else %}
+          <a href="/login" class="btn btn-light">Log in</a>
+          <a href="/register" class="btn btn-outline-light">Register</a>
+        {% endif %}
       </div>
+    </nav>
 
-      <button type="submit">Sign In</button>
-    </form>
-    <div id="login-feedback" class="feedback-message"></div>
-    <p><a href="#" onclick="showRecoverPassword()">Forgot password?</a></p>
-    <p><a href="#" onclick="showRegister()">Don't have an account? Register here</a></p>
-  </div>
+    <section class="hero-content">
+      <p class="eyebrow">Connect · Know · Share</p>
+      <h1>Find students, plans and experiences with MeetMate</h1>
+      <p class="hero-text">
+        A app designed for local students and Erasmus that want to know people,
+        join events and live a better university experience.
+      </p>
 
-  <div id="register-container" class="login-container" style="display: none;">
-    <form id="register-form">
-      <label for="register-username">Username</label>
-      <input type="text" id="register-username" name="register-username" required>
-
-      <label for="register-password">Password</label>
-      <div class="password-wrapper">
-        <input type="password" id="register-password" name="register-password" required>
-        <span class="toggle-password" onclick="togglePasswordVisibility('register-password')">👁️</span>
+      <div class="hero-buttons">
+        {% if user %}
+          <a href="/dashboard" class="btn btn-primary">Enter my panel</a>
+          <a href="/events" class="btn btn-secondary">View events</a>
+        {% else %}
+          <a href="/register" class="btn btn-primary">Create account</a>
+          <a href="/login" class="btn btn-secondary">I already have an account  </a>
+        {% endif %}
       </div>
+    </section>
+  </header>
 
-      <ul id="password-rules" class="rules">
-        <li id="rule-length" class="invalid">At least 6 characteres.</li>
-        <li id="rule-uppercase" class="invalid">At least one capital letter.</li>
-        <li id="rule-lowercase" class="invalid">At least one lowercase letter.</li>
-        <li id="rule-number" class="invalid">At least one number.</li>
-        <li id="rule-special" class="invalid">At least one special character.</li>
-      </ul>
-
-      <label for="security-question">Recovery Question</label>
-      <select id="security-question" name="security-question" required>
-        <option value="">-- Choose a question --</option>
-        <option value="What is the name of your first pet?">What is the name of your first pet?</option>
-        <option value="What is your favorite food?">What is your favorite food?</option>
-        <option value="In what city were you born?">In what city were you born?</option>
-        <option value="What is your favorite color?">What is your favorite color?</option>
-        <option value="What is the name of your best childhood friend?">What is the name of your best childhood friend?</option>
-      </select>
-
-      <label for="security-answer">Answer</label>
-      <input type="text" id="security-answer" name="security-answer" required>
-
-      <button type="submit">Register</button>
-      <p><a href="#" onclick="showLogin()">Already have an account? Sign in here</a></p>
-    </form>
-    <div id="register-feedback" class="feedback-message"></div>
-  </div>
-
-  <div id="recover-container" class="login-container" style="display: none;">
-    <form id="recover-form">
-      <label for="recover-username">Username</label>
-      <input type="text" id="recover-username" name="recover-username" required>
-
-      <button type="submit">Search question</button>
-    </form>
-
-    <div id="security-question-section" style="display: none; margin-top: 20px;">
-      <p id="security-question-text" style="font-weight: 600; margin-bottom: 10px; color: #333;"></p>
-
-      <label for="security-answer-input">Answer</label>
-      <input type="text" id="security-answer-input" name="security-answer" required>
-
-      <button id="validate-answer-button" type="button">Validate response</button>
+  <main class="section">
+    <div class="section-title">
+      <p class="eyebrow dark">What you can do</p>
+      <h2>Everything important in one place</h2>
     </div>
 
-    <div id="reset-password-section" style="display: none; margin-top: 20px;">
-      <label for="new-password">New password</label>
-      <div class="password-wrapper">
-        <input type="password" id="new-password" name="new-password" required>
-        <span class="toggle-password" onclick="togglePasswordVisibility('new-password')">👁️</span>
-      </div>
+    <div class="grid-3">
+      <article class="info-card">
+        <div class="icon-circle">👥</div>
+        <h3>Matching between students</h3>
+        <p>
+          Complete your profile and find compatible people based on university,
+          languages, hobbies, and sports.
+        </p>
+      </article>
 
-      <button id="reset-password-button" type="button">Change password</button>
+      <article class="info-card">
+        <div class="icon-circle">📅</div>
+        <h3>University events</h3>
+        <p>
+          Create plans, sign up for activities and check your event history.
+        </p>
+      </article>
+
+      <article class="info-card">
+        <div class="icon-circle">⭐</div>
+        <h3>Real experience</h3>
+        <p>
+          Share your opinion about the university, the city and the app when you have
+          already used MeetMate.
+        </p>
+      </article>
     </div>
+  </main>
 
-    <div id="recover-feedback" class="feedback-message" style="margin-top: 20px;"></div>
+  <section class="image-band image-band-students">
+    <div>
+      <p class="eyebrow">University life</p>
+      <h2>A more human, visual and intimate experience</h2>
+    </div>
+  </section>
 
-    <p><a href="#" onclick="showLogin()">Log back in</a></p>
-  </div>
-  
-  <script src="/static/app.js?v=99"></script>
 </body>
 </html>

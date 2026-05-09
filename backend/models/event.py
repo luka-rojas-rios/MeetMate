@@ -8,15 +8,31 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True)
+
     name = Column(String, nullable=False)
     description = Column(String, nullable=False)
     date = Column(String, nullable=False)
     location = Column(String, nullable=False)
+
+    category = Column(String, nullable=False, default="General")
+    max_participants = Column(Integer, nullable=True)
+
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-    creator = relationship("User", back_populates="created_events", foreign_keys=[created_by])
+    creator = relationship(
+        "User",
+        back_populates="created_events",
+        foreign_keys=[created_by]
+    )
+
     participants = relationship(
         "EventParticipant",
         back_populates="event",
-        cascade="all, delete-orphan",
+        cascade="all, delete-orphan"
+    )
+
+    reviews = relationship(
+        "EventReview",
+        back_populates="event",
+        cascade="all, delete-orphan"
     )

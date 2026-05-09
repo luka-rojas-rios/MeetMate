@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,14 +10,14 @@
 
   <nav class="topbar">
     <a href="/dashboard" class="brand small">
-      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
       <span>MeetMate</span>
     </a>
 
     <div class="topbar-links">
-      <a href="/dashboard">Panel</a>
-      <a href="/my-matches">My matches</a>
-      <a href="/match-profile">Matching profile</a>
+      <a href="/dashboard">Dashboard</a>
+      <a href="/my-matches">My Matches</a>
+      <a href="/match-profile">Matching Profile</a>
       <a href="/events">Events</a>
       <a href="/logout" class="danger-link">Logout</a>
     </div>
@@ -30,7 +30,7 @@
         <div class="match-photo">
           <img
             src="{% if match_user.profile_photo %}/static/{{ match_user.profile_photo }}{% else %}/static/profile-hero.jpg{% endif %}"
-            alt="Foto del match"
+            alt="Match photo"
           >
         </div>
       {% endif %}
@@ -98,7 +98,7 @@
 
           {% if match_request %}
             <a href="/matches/{{ match_request.id }}" class="btn btn-primary">
-              View profile 
+              View profile
             </a>
           {% endif %}
 

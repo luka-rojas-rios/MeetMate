@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,12 +10,12 @@
 
   <nav class="topbar">
     <a href="/dashboard" class="brand small">
-      <img src="/static/logo.jpeg" alt="Logo MeetMate">
+      <img src="/static/logo.jpeg" alt="MeetMate logo">
       <span>MeetMate</span>
     </a>
 
     <div class="topbar-links">
-      <a href="/dashboard">Panel</a>
+      <a href="/dashboard">Dashboard</a>
       <a href="/my-matches">My Matches</a>
       <a href="/events">Events</a>
       <a href="/feedback">Feedback</a>
@@ -45,9 +45,19 @@
           <div class="alert alert-success">{{ success }}</div>
         {% endif %}
 
+        {% set language_options = ["Spanish", "English", "French", "German", "Italian", "Portuguese", "Dutch"] %}
+        {% set language_is_other = user.language and user.language not in language_options %}
+        {% set language_2_is_other = user.language_2 and user.language_2 not in language_options %}
+
         <form action="/match-profile" method="post" class="form">
           <label for="user_type">User Type</label>
-          <select id="user_type" name="user_type" required>
+          <select
+            id="user_type"
+            name="user_type"
+            required
+            oninvalid="this.setCustomValidity('Please select your user type.')"
+            oninput="this.setCustomValidity('')"
+          >
             <option value="">Select an option</option>
             <option value="Exchange" {% if user.user_type == "Exchange" %}selected{% endif %}>Exchange</option>
             <option value="Local" {% if user.user_type == "Local" %}selected{% endif %}>Local</option>
@@ -56,7 +66,13 @@
           <div class="two-columns">
             <div>
               <label for="language">Main Language</label>
-              <select id="language" name="language" required>
+              <select
+                id="language"
+                name="language"
+                required
+                oninvalid="this.setCustomValidity('Please select your main language.')"
+                oninput="this.setCustomValidity('')"
+              >
                 <option value="">Select a language</option>
                 <option value="Spanish" {% if user.language == "Spanish" %}selected{% endif %}>Spanish</option>
                 <option value="English" {% if user.language == "English" %}selected{% endif %}>English</option>
@@ -65,7 +81,17 @@
                 <option value="Italian" {% if user.language == "Italian" %}selected{% endif %}>Italian</option>
                 <option value="Portuguese" {% if user.language == "Portuguese" %}selected{% endif %}>Portuguese</option>
                 <option value="Dutch" {% if user.language == "Dutch" %}selected{% endif %}>Dutch</option>
+                <option value="Other" {% if language_is_other %}selected{% endif %}>Other</option>
               </select>
+
+              <input
+                id="language_other"
+                type="text"
+                name="language_other"
+                value="{% if language_is_other %}{{ user.language }}{% endif %}"
+                placeholder="Write your language"
+                style="{% if not language_is_other %}display: none;{% endif %} margin-top: 12px;"
+              >
             </div>
 
             <div>
@@ -79,33 +105,90 @@
                 <option value="Italian" {% if user.language_2 == "Italian" %}selected{% endif %}>Italian</option>
                 <option value="Portuguese" {% if user.language_2 == "Portuguese" %}selected{% endif %}>Portuguese</option>
                 <option value="Dutch" {% if user.language_2 == "Dutch" %}selected{% endif %}>Dutch</option>
+                <option value="Other" {% if language_2_is_other %}selected{% endif %}>Other</option>
               </select>
+
+              <input
+                id="language_2_other"
+                type="text"
+                name="language_2_other"
+                value="{% if language_2_is_other %}{{ user.language_2 }}{% endif %}"
+                placeholder="Write your second language"
+                style="{% if not language_2_is_other %}display: none;{% endif %} margin-top: 12px;"
+              >
             </div>
           </div>
 
           <div class="two-columns">
             <div>
               <label for="home_university">Home University</label>
-              <select id="home_university" name="home_university" required>
-                <option value="">Select a university</option>
-                <option value="Universidad de Sevilla" {% if user.home_university == "Universidad de Sevilla" %}selected{% endif %}>Sevilla University</option>
-                <option value="Universidad de Granada" {% if user.home_university == "Universidad de Granada" %}selected{% endif %}>Granada University</option>
-                <option value="Universidad Complutense de Madrid" {% if user.home_university == "Universidad Complutense de Madrid" %}selected{% endif %}>Complutense University of Madrid</option>
-                <option value="Universitat de Barcelona" {% if user.home_university == "Universitat de Barcelona" %}selected{% endif %}>Barcelona University</option>
-                <option value="Universidad de Valencia" {% if user.home_university == "Universidad de Valencia" %}selected{% endif %}>Valencia University</option>
-                <option value="Otra" {% if user.home_university == "Otra" %}selected{% endif %}>Other</option>
-              </select>
+              <input
+                id="home_university"
+                type="text"
+                name="home_university"
+                value="{{ user.home_university or '' }}"
+                placeholder="Write your home university"
+                required
+                oninvalid="this.setCustomValidity('Please enter your home university.')"
+                oninput="this.setCustomValidity('')"
+              >
             </div>
 
             <div>
-              <label for="exchange_university">Exchange University</label>
-              <select id="exchange_university" name="exchange_university" required>
+              <label for="exchange_university">Current University / Exchange</label>
+              <select
+                id="exchange_university"
+                name="exchange_university"
+                required
+                oninvalid="this.setCustomValidity('Please select your current or exchange university.')"
+                oninput="this.setCustomValidity('')"
+              >
                 <option value="">Select a university</option>
-                <option value="Universidad de Sevilla" {% if user.exchange_university == "Universidad de Sevilla" %}selected{% endif %}>Sevilla University</option>
-                <option value="Universidad de Granada" {% if user.exchange_university == "Universidad de Granada" %}selected{% endif %}>Granada University</option>
+                <option value="Universidad Francisco de Vitoria" {% if user.exchange_university == "Universidad Francisco de Vitoria" %}selected{% endif %}>Francisco de Vitoria University (UFV)</option>
                 <option value="Universidad Complutense de Madrid" {% if user.exchange_university == "Universidad Complutense de Madrid" %}selected{% endif %}>Complutense University of Madrid</option>
-                <option value="Universitat de Barcelona" {% if user.exchange_university == "Universitat de Barcelona" %}selected{% endif %}>Barcelona University</option>
-                <option value="Universidad de Valencia" {% if user.exchange_university == "Universidad de Valencia" %}selected{% endif %}>Valencia University</option>
+                <option value="Universidad Autónoma de Madrid" {% if user.exchange_university == "Universidad Autónoma de Madrid" %}selected{% endif %}>Autonomous University of Madrid</option>
+                <option value="Universidad Carlos III de Madrid" {% if user.exchange_university == "Universidad Carlos III de Madrid" %}selected{% endif %}>Carlos III University of Madrid</option>
+                <option value="Universidad Politécnica de Madrid" {% if user.exchange_university == "Universidad Politécnica de Madrid" %}selected{% endif %}>Polytechnic University of Madrid</option>
+                <option value="Universidad Rey Juan Carlos" {% if user.exchange_university == "Universidad Rey Juan Carlos" %}selected{% endif %}>Rey Juan Carlos University</option>
+                <option value="Universidad de Alcalá" {% if user.exchange_university == "Universidad de Alcalá" %}selected{% endif %}>University of Alcalá</option>
+                <option value="Universidad Pontificia Comillas" {% if user.exchange_university == "Universidad Pontificia Comillas" %}selected{% endif %}>Comillas Pontifical University</option>
+                <option value="Universidad CEU San Pablo" {% if user.exchange_university == "Universidad CEU San Pablo" %}selected{% endif %}>CEU San Pablo University</option>
+                <option value="Universidad Nebrija" {% if user.exchange_university == "Universidad Nebrija" %}selected{% endif %}>Nebrija University</option>
+                <option value="Universidad Europea de Madrid" {% if user.exchange_university == "Universidad Europea de Madrid" %}selected{% endif %}>European University of Madrid</option>
+                <option value="IE University" {% if user.exchange_university == "IE University" %}selected{% endif %}>IE University</option>
+                <option value="Universidad de Sevilla" {% if user.exchange_university == "Universidad de Sevilla" %}selected{% endif %}>University of Seville</option>
+                <option value="Universidad de Granada" {% if user.exchange_university == "Universidad de Granada" %}selected{% endif %}>University of Granada</option>
+                <option value="Universitat de Barcelona" {% if user.exchange_university == "Universitat de Barcelona" %}selected{% endif %}>University of Barcelona</option>
+                <option value="Universitat Autònoma de Barcelona" {% if user.exchange_university == "Universitat Autònoma de Barcelona" %}selected{% endif %}>Autonomous University of Barcelona</option>
+                <option value="Universitat Politècnica de Catalunya" {% if user.exchange_university == "Universitat Politècnica de Catalunya" %}selected{% endif %}>Polytechnic University of Catalonia</option>
+                <option value="Universitat Pompeu Fabra" {% if user.exchange_university == "Universitat Pompeu Fabra" %}selected{% endif %}>Pompeu Fabra University</option>
+                <option value="Universidad de Valencia" {% if user.exchange_university == "Universidad de Valencia" %}selected{% endif %}>University of Valencia</option>
+                <option value="Universitat de València" {% if user.exchange_university == "Universitat de València" %}selected{% endif %}>University of Valencia</option>
+                <option value="Universitat Politècnica de València" {% if user.exchange_university == "Universitat Politècnica de València" %}selected{% endif %}>Polytechnic University of Valencia</option>
+                <option value="Universitat Jaume I" {% if user.exchange_university == "Universitat Jaume I" %}selected{% endif %}>Jaume I University</option>
+                <option value="Universidad de Salamanca" {% if user.exchange_university == "Universidad de Salamanca" %}selected{% endif %}>University of Salamanca</option>
+                <option value="Universidad de Valladolid" {% if user.exchange_university == "Universidad de Valladolid" %}selected{% endif %}>University of Valladolid</option>
+                <option value="Universidad de Zaragoza" {% if user.exchange_university == "Universidad de Zaragoza" %}selected{% endif %}>University of Zaragoza</option>
+                <option value="Universidad de Navarra" {% if user.exchange_university == "Universidad de Navarra" %}selected{% endif %}>University of Navarra</option>
+                <option value="Universidad del País Vasco" {% if user.exchange_university == "Universidad del País Vasco" %}selected{% endif %}>University of the Basque Country</option>
+                <option value="Universidad de Deusto" {% if user.exchange_university == "Universidad de Deusto" %}selected{% endif %}>University of Deusto</option>
+                <option value="Universidad de Málaga" {% if user.exchange_university == "Universidad de Málaga" %}selected{% endif %}>University of Málaga</option>
+                <option value="Universidad de Córdoba" {% if user.exchange_university == "Universidad de Córdoba" %}selected{% endif %}>University of Córdoba</option>
+                <option value="Universidad de Cádiz" {% if user.exchange_university == "Universidad de Cádiz" %}selected{% endif %}>University of Cádiz</option>
+                <option value="Universidad de Alicante" {% if user.exchange_university == "Universidad de Alicante" %}selected{% endif %}>University of Alicante</option>
+                <option value="Universidad Miguel Hernández de Elche" {% if user.exchange_university == "Universidad Miguel Hernández de Elche" %}selected{% endif %}>Miguel Hernández University of Elche</option>
+                <option value="Universidad de Murcia" {% if user.exchange_university == "Universidad de Murcia" %}selected{% endif %}>University of Murcia</option>
+                <option value="Universidad de Oviedo" {% if user.exchange_university == "Universidad de Oviedo" %}selected{% endif %}>University of Oviedo</option>
+                <option value="Universidad de Cantabria" {% if user.exchange_university == "Universidad de Cantabria" %}selected{% endif %}>University of Cantabria</option>
+                <option value="Universidad de Santiago de Compostela" {% if user.exchange_university == "Universidad de Santiago de Compostela" %}selected{% endif %}>University of Santiago de Compostela</option>
+                <option value="Universidade da Coruña" {% if user.exchange_university == "Universidade da Coruña" %}selected{% endif %}>University of A Coruña</option>
+                <option value="Universidade de Vigo" {% if user.exchange_university == "Universidade de Vigo" %}selected{% endif %}>University of Vigo</option>
+                <option value="Universitat de les Illes Balears" {% if user.exchange_university == "Universitat de les Illes Balears" %}selected{% endif %}>University of the Balearic Islands</option>
+                <option value="Universidad de La Laguna" {% if user.exchange_university == "Universidad de La Laguna" %}selected{% endif %}>University of La Laguna</option>
+                <option value="Universidad de Las Palmas de Gran Canaria" {% if user.exchange_university == "Universidad de Las Palmas de Gran Canaria" %}selected{% endif %}>University of Las Palmas de Gran Canaria</option>
+                <option value="Universidad de Castilla-La Mancha" {% if user.exchange_university == "Universidad de Castilla-La Mancha" %}selected{% endif %}>University of Castilla-La Mancha</option>
+                <option value="Universidad de Extremadura" {% if user.exchange_university == "Universidad de Extremadura" %}selected{% endif %}>University of Extremadura</option>
+                <option value="Universidad de La Rioja" {% if user.exchange_university == "Universidad de La Rioja" %}selected{% endif %}>University of La Rioja</option>
                 <option value="Otra" {% if user.exchange_university == "Otra" %}selected{% endif %}>Other</option>
               </select>
             </div>
@@ -122,7 +205,7 @@
                 <option value="Natación" {% if user.favorite_sport_1 == "Natación" %}selected{% endif %}>Swimming</option>
                 <option value="Running" {% if user.favorite_sport_1 == "Running" %}selected{% endif %}>Running</option>
                 <option value="Voleibol" {% if user.favorite_sport_1 == "Voleibol" %}selected{% endif %}>Volleyball</option>
-                <option value="Gimnasio" {% if user.favorite_sport_1 == "Gimnasio" %}selected{% endif %}>Gymnastics</option>
+                <option value="Gimnasio" {% if user.favorite_sport_1 == "Gimnasio" %}selected{% endif %}>Gym</option>
               </select>
             </div>
 
@@ -136,7 +219,7 @@
                 <option value="Natación" {% if user.favorite_sport_2 == "Natación" %}selected{% endif %}>Swimming</option>
                 <option value="Running" {% if user.favorite_sport_2 == "Running" %}selected{% endif %}>Running</option>
                 <option value="Voleibol" {% if user.favorite_sport_2 == "Voleibol" %}selected{% endif %}>Volleyball</option>
-                <option value="Gimnasio" {% if user.favorite_sport_2 == "Gimnasio" %}selected{% endif %}>Gymnastics</option>
+                <option value="Gimnasio" {% if user.favorite_sport_2 == "Gimnasio" %}selected{% endif %}>Gym</option>
               </select>
             </div>
           </div>
@@ -147,12 +230,12 @@
               <select id="hobby_1" name="hobby_1">
                 <option value="">Select an option</option>
                 <option value="Viajar" {% if user.hobby_1 == "Viajar" %}selected{% endif %}>Travel</option>
-                <option value="Leer" {% if user.hobby_1 == "Leer" %}selected{% endif %}>Read</option>
-                <option value="Cocinar" {% if user.hobby_1 == "Cocinar" %}selected{% endif %}>Cook</option>
+                <option value="Leer" {% if user.hobby_1 == "Leer" %}selected{% endif %}>Reading</option>
+                <option value="Cocinar" {% if user.hobby_1 == "Cocinar" %}selected{% endif %}>Cooking</option>
                 <option value="Música" {% if user.hobby_1 == "Música" %}selected{% endif %}>Music</option>
-                <option value="Series y cine" {% if user.hobby_1 == "Series y cine" %}selected{% endif %}>TV Shows and Movies</option>
+                <option value="Series y cine" {% if user.hobby_1 == "Series y cine" %}selected{% endif %}>TV shows and movies</option>
                 <option value="Senderismo" {% if user.hobby_1 == "Senderismo" %}selected{% endif %}>Hiking</option>
-                <option value="Videojuegos" {% if user.hobby_1 == "Videojuegos" %}selected{% endif %}>Video Games</option>
+                <option value="Videojuegos" {% if user.hobby_1 == "Videojuegos" %}selected{% endif %}>Video games</option>
               </select>
             </div>
 
@@ -161,12 +244,12 @@
               <select id="hobby_2" name="hobby_2">
                 <option value="">Select an option</option>
                 <option value="Viajar" {% if user.hobby_2 == "Viajar" %}selected{% endif %}>Travel</option>
-                <option value="Leer" {% if user.hobby_2 == "Leer" %}selected{% endif %}>Read</option>
-                <option value="Cocinar" {% if user.hobby_2 == "Cocinar" %}selected{% endif %}>Cook</option>
+                <option value="Leer" {% if user.hobby_2 == "Leer" %}selected{% endif %}>Reading</option>
+                <option value="Cocinar" {% if user.hobby_2 == "Cocinar" %}selected{% endif %}>Cooking</option>
                 <option value="Música" {% if user.hobby_2 == "Música" %}selected{% endif %}>Music</option>
-                <option value="Series y cine" {% if user.hobby_2 == "Series y cine" %}selected{% endif %}>TV Shows and Movies</option>
+                <option value="Series y cine" {% if user.hobby_2 == "Series y cine" %}selected{% endif %}>TV shows and movies</option>
                 <option value="Senderismo" {% if user.hobby_2 == "Senderismo" %}selected{% endif %}>Hiking</option>
-                <option value="Videojuegos" {% if user.hobby_2 == "Videojuegos" %}selected{% endif %}>Video Games</option>
+                <option value="Videojuegos" {% if user.hobby_2 == "Videojuegos" %}selected{% endif %}>Video games</option>
               </select>
             </div>
           </div>
@@ -184,6 +267,30 @@
       </div>
     </section>
   </main>
+
+  <script>
+    function setupOtherLanguage(selectId, inputId) {
+      const select = document.getElementById(selectId);
+      const input = document.getElementById(inputId);
+
+      function updateOtherInput() {
+        if (select.value === "Other") {
+          input.style.display = "block";
+          input.required = true;
+        } else {
+          input.style.display = "none";
+          input.required = false;
+          input.value = "";
+        }
+      }
+
+      select.addEventListener("change", updateOtherInput);
+      updateOtherInput();
+    }
+
+    setupOtherLanguage("language", "language_other");
+    setupOtherLanguage("language_2", "language_2_other");
+  </script>
 
 </body>
 </html>

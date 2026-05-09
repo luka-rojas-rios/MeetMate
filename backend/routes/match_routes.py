@@ -14,6 +14,17 @@ router = APIRouter()
 templates = Jinja2Templates(directory="frontend/templates")
 
 
+SPANISH_REASON_TRANSLATIONS = {
+    "Tenéis perfiles complementarios.": "You have complementary profiles.",
+    "Compartís idioma o idiomas.": "You share one or more languages.",
+    "Tu universidad de origen coincide con su universidad actual.": "Your home university matches their current university.",
+    "Tu universidad actual coincide con su universidad de origen.": "Your current university matches their home university.",
+    "Compartís algún deporte favorito.": "You share at least one favorite sport.",
+    "Tenéis hobbies en común.": "You have hobbies in common.",
+    "Ambos tenéis el perfil de matching completo.": "Both users have completed their matching profile.",
+}
+
+
 def get_current_user(request: Request, db: Session):
     user_id = request.session.get("user_id")
 
@@ -28,6 +39,32 @@ def clean(value):
         return ""
 
     return str(value).strip().lower()
+
+
+def translate_match_reason_text(reason_text):
+    if not reason_text:
+        return reason_text
+
+    translated_text = reason_text
+
+    for spanish_text, english_text in SPANISH_REASON_TRANSLATIONS.items():
+        translated_text = translated_text.replace(spanish_text, english_text)
+
+    return translated_text
+
+
+def prepare_match_for_display(match: Match):
+    if match and match.match_reason:
+        match.match_reason = translate_match_reason_text(match.match_reason)
+
+    return match
+
+
+def get_selected_language(language_value: str | None, other_language_value: str | None):
+    if language_value == "Other":
+        return other_language_value.strip() if other_language_value else "Other"
+
+    return language_value
 
 
 def has_match_profile(user: User):
@@ -252,7 +289,7 @@ def create_pending_match(db: Session, current_user: User, candidate: User, score
     existing_match = get_existing_match_between_users(db, current_user.id, candidate.id)
 
     if existing_match:
-        return existing_match
+        return prepare_match_for_display(existing_match)
 
     reason_text = "\n".join(reasons)
 
@@ -356,7 +393,9 @@ def save_match_profile(
     request: Request,
     user_type: str = Form(...),
     language: str = Form(...),
+    language_other: str = Form(None),
     language_2: str = Form(None),
+    language_2_other: str = Form(None),
     home_university: str = Form(...),
     exchange_university: str = Form(...),
     favorite_sport_1: str = Form(None),
@@ -371,9 +410,12 @@ def save_match_profile(
     if not user:
         return RedirectResponse(url="/login", status_code=303)
 
+    selected_language = get_selected_language(language, language_other)
+    selected_language_2 = get_selected_language(language_2, language_2_other)
+
     user.user_type = user_type
-    user.language = language
-    user.language_2 = language_2
+    user.language = selected_language
+    user.language_2 = selected_language_2
     user.home_university = home_university
     user.exchange_university = exchange_university
     user.favorite_sport_1 = favorite_sport_1
@@ -415,7 +457,7 @@ def find_match(request: Request, db: Session = Depends(get_db)):
             name="match_success.html",
             context={
                 "user": user,
-                "match_request": accepted_match,
+                "match_request": prepare_match_for_display(accepted_match),
                 "match_user": accepted_user,
                 "status_title": "You already have an accepted match",
                 "status_message": "Only one accepted match is allowed. Once you have an accepted match, you cannot search for another one.",
@@ -484,7 +526,7 @@ def find_match(request: Request, db: Session = Depends(get_db)):
         name="match_success.html",
         context={
             "user": user,
-            "match_request": match_request,
+            "match_request": prepare_match_for_display(match_request),
             "match_user": candidate,
             "status_title": "Match request sent",
             "status_message": "Your request will remain pending until the other person accepts or rejects it.",
@@ -526,6 +568,7 @@ def my_matches(
     rejected_matches = []
 
     for match in matches:
+        prepare_match_for_display(match)
         other_user = get_other_user(match, user)
 
         if not other_user:
@@ -694,6 +737,6 @@ def matched_profile(match_id: int, request: Request, db: Session = Depends(get_d
         context={
             "user": user,
             "matched_user": matched_user,
-            "match": match,
+            "match": prepare_match_for_display(match),
         },
     )

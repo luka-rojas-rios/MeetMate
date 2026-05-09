@@ -34,6 +34,19 @@ EVENT_CATEGORIES = [
 ]
 
 
+CATEGORY_ALIASES = {
+    "General": ["General"],
+    "Sports": ["Sports", "Sport", "Deporte", "Deportes"],
+    "Culture": ["Culture", "Cultura"],
+    "Party": ["Party", "Fiesta"],
+    "Food": ["Food", "Comida"],
+    "University": ["University", "Universidad"],
+    "Trips": ["Trips", "Trip", "Travel", "Travels", "Viajes", "Viaje"],
+    "Study": ["Study", "Studies", "Estudio", "Estudios"],
+    "Languages": ["Languages", "Language", "Idiomas", "Idioma"],
+}
+
+
 def get_current_user(request: Request, db: Session):
     user_id = request.session.get("user_id")
 
@@ -61,21 +74,39 @@ def normalize_category(category):
     if not category:
         return "General"
 
+    category = str(category).strip()
+
     spanish_to_english = {
         "Deporte": "Sports",
+        "Deportes": "Sports",
         "Cultura": "Culture",
         "Fiesta": "Party",
         "Comida": "Food",
         "Universidad": "University",
         "Viajes": "Trips",
+        "Viaje": "Trips",
+        "Travel": "Trips",
+        "Travels": "Trips",
         "Estudio": "Study",
+        "Estudios": "Study",
         "Idiomas": "Languages",
+        "Idioma": "Languages",
     }
 
     if category in EVENT_CATEGORIES:
         return category
 
     return spanish_to_english.get(category, "General")
+
+
+def get_category_filter_values(category):
+    if not category:
+        return []
+
+    normalized_category = normalize_category(category)
+    values = CATEGORY_ALIASES.get(normalized_category, [normalized_category])
+
+    return [value.strip().lower() for value in values]
 
 
 def is_event_expired(event: Event):
@@ -302,7 +333,11 @@ def events_page(
         )
 
     if category and hasattr(Event, "category"):
-        query = query.filter(Event.category == category)
+        valid_categories = get_category_filter_values(category)
+
+        query = query.filter(
+            func.lower(func.trim(Event.category)).in_(valid_categories)
+        )
 
     events = query.order_by(event_date_as_text.asc()).all()
     event_cards = [event_to_view_model(event, user, db) for event in events]
@@ -326,7 +361,7 @@ def events_page(
             "user": user,
             "events": event_cards,
             "categories": EVENT_CATEGORIES,
-            "selected_category": category,
+            "selected_category": normalize_category(category) if category else "",
             "selected_view": view,
             "search_query": q,
             "today": today,

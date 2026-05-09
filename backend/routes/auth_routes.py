@@ -1,5 +1,8 @@
 import os
 import re
+import hmac
+import hashlib
+import secrets
 import shutil
 from pathlib import Path
 
@@ -19,6 +22,52 @@ templates = Jinja2Templates(directory="frontend/templates")
 
 UPLOAD_DIR = Path("frontend/static/uploads/profile_photos")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+HASH_ALGORITHM = "pbkdf2_sha256"
+HASH_ITERATIONS = 260000
+
+
+def hash_password(password: str):
+    salt = secrets.token_hex(16)
+    password_hash = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        HASH_ITERATIONS,
+    ).hex()
+
+    return f"{HASH_ALGORITHM}${HASH_ITERATIONS}${salt}${password_hash}"
+
+
+def is_hashed_password(stored_password: str):
+    return bool(stored_password and stored_password.startswith(f"{HASH_ALGORITHM}$"))
+
+
+def verify_password(plain_password: str, stored_password: str):
+    if not stored_password:
+        return False
+
+    if not is_hashed_password(stored_password):
+        return hmac.compare_digest(plain_password, stored_password)
+
+    try:
+        algorithm, iterations, salt, saved_hash = stored_password.split("$", 3)
+        iterations = int(iterations)
+
+        if algorithm != HASH_ALGORITHM:
+            return False
+
+        password_hash = hashlib.pbkdf2_hmac(
+            "sha256",
+            plain_password.encode("utf-8"),
+            salt.encode("utf-8"),
+            iterations,
+        ).hex()
+
+        return hmac.compare_digest(password_hash, saved_hash)
+
+    except ValueError:
+        return False
 
 
 def validate_password(password: str):
@@ -177,7 +226,7 @@ def register(
 
     new_user = User(
         username=username,
-        password=password,
+        password=hash_password(password),
         security_question=security_question,
         security_answer=security_answer,
     )
@@ -212,13 +261,9 @@ def login(
 ):
     username = username.strip().lower()
 
-    user = (
-        db.query(User)
-        .filter(User.username == username, User.password == password)
-        .first()
-    )
+    user = db.query(User).filter(User.username == username).first()
 
-    if not user:
+    if not user or not verify_password(password, user.password):
         return templates.TemplateResponse(
             request=request,
             name="login.html",
@@ -226,6 +271,11 @@ def login(
                 "error": "Incorrect username or password.",
             },
         )
+
+    if not is_hashed_password(user.password):
+        user.password = hash_password(password)
+        db.commit()
+        db.refresh(user)
 
     request.session["user_id"] = user.id
     request.session["username"] = user.username
@@ -412,7 +462,7 @@ def reset_password(
             },
         )
 
-    user.password = new_password
+    user.password = hash_password(new_password)
     db.commit()
 
     return RedirectResponse(url="/login", status_code=303)
